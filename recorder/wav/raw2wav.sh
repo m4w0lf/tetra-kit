@@ -12,4 +12,4 @@ for FILE in *.raw; do
     sox -r 8k -e signed -b 16 "$BASE.raw" "$BASE.wav"
 done
 
-rm  *.out *.raw 
+rm -f *.raw 

@@ -323,9 +323,8 @@ void tetra_dl::report_send()
 
     std::string output(buffer.GetString());
 
-    char eol = '\n';
-    write(socketfd, output.c_str(), output.length() * sizeof(char));            // string doesn't contain newline
-    write(socketfd, &eol, sizeof(char));                                        // so send it alone
+    output += '\n';                                                             // append newline
+    write(socketfd, output.c_str(), output.length() * sizeof(char));            // send complete line
 
     if (g_debug_level > 1)
     {

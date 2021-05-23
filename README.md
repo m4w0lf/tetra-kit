@@ -65,7 +65,7 @@ Get [tetra-kit-player](https://github.com/sonictruth/tetra-kit-player).
 Build
 =====
 
-    Note: don't forget to run `make clean` and rebuild the decoder and recorder when the repositery is updated
+    Note: don't forget to run `build.sh` script to rebuild the decoder and recorder when the repositery is updated
 
 Prerequisites:
 * gnuradio >= v3.7.14 and gnuradio-companion with rtl-sdr (works also with GnuRadio 3.7.11)
@@ -79,7 +79,9 @@ Prerequisites:
 Build project
 ```sh
 $ ./build.sh
+
 or
+
 $ sh build.sh
 ```
 
@@ -91,9 +93,7 @@ $ gnuradio-companion pi4dqpsk_rx.grc
 
 The internal speech codec is now used by default, `.raw` output files are generated
 directly in `recorder/raw/` folder (`-a` option not required anymore).
-
-The script `raw2wav.sh` is used to convert it to wav file.
-
+The script `raw2wav.sh` can be used to convert raw to wav file.
 
 Anyway, if you still want to use the external ETSI speech codecs
 with the script `out2wav.sh`, you can use `recorder` with `-x` flag.
@@ -105,7 +105,7 @@ Open 3 shells in the 3 folders:
 
 * In recorder/ run `./recorder`
 
-```sh
+```
 Usage: recorder [OPTIONS]
 
 Options:
@@ -128,7 +128,7 @@ $ ./raw2play.sh
 
 * In decoder/ run `./decoder`
 
-```sh
+```
 Usage: decoder [OPTIONS]
 
 Options:
