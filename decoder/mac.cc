@@ -409,7 +409,7 @@ void tetra_dl::service_upper_mac(std::vector<uint8_t> data, mac_logical_channel_
             broadcast_type = get_value(data, 2, 2);
             switch (broadcast_type)
             {
-            case 0b00:                                                          // SYSINFO see 21.4.4.1 / BNCH ???
+            case 0b00:                                                          // SYSINFO see 21.4.4.1 / BNCH on SCH_HD or or STCH
                 txt = "SYSINFO";
                 tm_sdu = mac_pdu_process_sysinfo(data);                         // TM-SDU (MLE data)
                 break;

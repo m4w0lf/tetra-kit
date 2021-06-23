@@ -46,7 +46,7 @@ void tetra_dl::service_mle(std::vector<uint8_t> pdu, mac_logical_channel_t mac_l
         infos = tt.str();
         return;                                                                 // TODO clean up
     }
-    else if (mac_logical_channel == BNCH)                                       // TM-SDU was alrdeady sent directly by MAC 18.4.2. Report infos and stop here
+    else if (mac_logical_channel == BNCH)                                       // TM-SDU was already sent directly by MAC 18.4.2. Report infos and stop here
     {
         print_infos_flag = true;
         txt = "MLE";
