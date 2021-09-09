@@ -16,21 +16,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "tetra_dl.h"
-#include "utils.h"
+#include "mac.h"
+
+using namespace Tetra;
+
 
 /**
  * @brief Fibonacci LFSR descrambling - 8.2.5
  *
  */
 
-std::vector<uint8_t> tetra_dl::dec_descramble(std::vector<uint8_t> data, int len, uint32_t scrambling_code) // OK
+std::vector<uint8_t> Mac::descramble(std::vector<uint8_t> data, const int len, const uint32_t scramblingCode)
 {
     const uint8_t poly[14] = {32, 26, 23, 22, 16, 12, 11, 10, 8, 7, 5, 4, 2, 1}; // Feedback polynomial - see 8.2.5.2 (8.39)
 
     std::vector<uint8_t> res;
 
-    uint32_t lfsr = scrambling_code;                                            // linear feedback shift register initialization (=0 + 3 for BSCH, calculated from Color code ch 19 otherwise)
+    uint32_t lfsr = scramblingCode;                                             // linear feedback shift register initialization (=0 + 3 for BSCH, calculated from Color code ch 19 otherwise)
     for (int i = 0; i < len; i++)
     {
         uint32_t bit = lfsr >> (32 - poly[0]);                                  // apply poly (Xj + ...)
@@ -52,7 +54,7 @@ std::vector<uint8_t> tetra_dl::dec_descramble(std::vector<uint8_t> data, int len
  *
  */
 
-std::vector<uint8_t> tetra_dl::dec_deinterleave(std::vector<uint8_t> data, uint32_t K, uint32_t a)
+std::vector<uint8_t> Mac::deinterleave(std::vector<uint8_t> data, const uint32_t K, const uint32_t a)
 {
     std::vector<uint8_t> res(K, 0);                                             // output vector is size K
 
@@ -70,7 +72,7 @@ std::vector<uint8_t> tetra_dl::dec_deinterleave(std::vector<uint8_t> data, uint3
  *
  */
 
-std::vector<uint8_t> tetra_dl::dec_depuncture23(std::vector<uint8_t> data, uint32_t len)
+std::vector<uint8_t> Mac::depuncture23(std::vector<uint8_t> data, const uint32_t len)
 {
     const uint8_t P[] = {0, 1, 2, 5};                                           // 8.2.3.1.3 - P[1..t]
     std::vector<uint8_t> res(4 * len * 2 / 3, 2);                               // 8.2.3.1.2 with flag 2 for erase bit in Viterbi routine
@@ -93,21 +95,21 @@ std::vector<uint8_t> tetra_dl::dec_depuncture23(std::vector<uint8_t> data, uint3
  *
  */
 
-std::vector<uint8_t> tetra_dl::dec_viterbi_decode16_14(std::vector<uint8_t> data)
+std::vector<uint8_t> Mac::viterbiDecode1614(std::vector<uint8_t> data)
 {
-    std::string s_in = "";
-    for (unsigned int i = 0; i < data.size(); i++)
+    std::string sIn = "";
+    for (std::size_t idx = 0; idx < data.size(); idx++)
     {
-        s_in += (char)(data[i] + '0');
+        sIn += (char)(data[idx] + '0');
     }
 
-    std::string s_out = viterbi_codec16_14->Decode(s_in);
+    std::string sOut = m_viterbiCodec1614->Decode(sIn);
 
     std::vector<uint8_t> res;
 
-    for (unsigned i = 0; i < s_out.size(); i++)
+    for (size_t idx = 0; idx < sOut.size(); idx++)
     {
-        res.push_back((uint8_t)(s_out[i] - '0'));
+        res.push_back((uint8_t)(sOut[idx] - '0'));
     }
 
     return res;
@@ -120,7 +122,7 @@ std::vector<uint8_t> tetra_dl::dec_viterbi_decode16_14(std::vector<uint8_t> data
  *
  */
 
-std::vector<uint8_t> tetra_dl::dec_reed_muller_3014_decode(std::vector<uint8_t> data)
+std::vector<uint8_t> Mac::reedMuller3014Decode(std::vector<uint8_t> data)
 {
     uint8_t q[5];
     std::vector<uint8_t> res(14);
@@ -243,7 +245,7 @@ std::vector<uint8_t> tetra_dl::dec_reed_muller_3014_decode(std::vector<uint8_t> 
  *
  */
 
-int tetra_dl::check_crc16ccitt(std::vector<uint8_t> data, int len)
+int Mac::checkCrc16Ccitt(std::vector<uint8_t> data, const int len)
 {
     uint16_t crc = 0xFFFF;                                                      // CRC16-CCITT initial value
 

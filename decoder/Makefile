@@ -1,10 +1,19 @@
 CC = g++
-CFLAGS = -O2 -std=c++11 -Wall -Wextra
+CFLAGS = -fmax-errors=5 -O2 -std=c++11 -Wall -Wextra
 LDFLAGS = -lz
 
-SRC = 	decoder_main.cc coding.cc report.cc utils.cc viterbi.cc base64.cc \
-	tetra_dl.cc mac.cc llc.cc mle.cc cmce.cc cmce_sds.cc cmce_sds_lip.cc sndcp.cc \
-	uplane.cc mac_defrag.cc
+SRC = main.cc decoder.cc \
+	common/base64.cc common/pdu.cc common/layer.cc common/log.cc common/report.cc common/tetracell.cc common/utils.cc common/tetra.cc \
+	llc/llc.cc \
+	mle/mle.cc \
+	sndcp/sndcp.cc \
+	cmce/cmce.cc cmce/sds/sds.cc \
+	uplane/uplane.cc \
+	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc
+
+#SRC = 	decoder_main.cc coding.cc report.cc utils.cc viterbi.cc base64.cc \
+#	tetra_dl.cc mac.cc llc.cc mle.cc cmce.cc cmce_sds.cc cmce_sds_lip.cc sndcp.cc \
+#	uplane.cc mac_defrag.cc
 
 OBJ = $(SRC:.cc=.o)
 EXE = decoder
@@ -22,4 +31,3 @@ test: test.o
 
 clean:
 	rm -f $(OBJ) $(EXE) *.o *~
-
