@@ -4,6 +4,12 @@ TETRA downlink decoder/recorder kit
 
 ![](screenshots/main.png)
 
+*** NOTICE ***
+==============
+I am working on a major upgrade of the decoder with one class per layer.
+I switched to CERN coding convention [ATLAS C++ Coding Standard v1.2](https://cds.cern.ch/record/685315/files/soft-2002-001.pdf).
+Feel free to test and improve it on branch dev-1.0.
+
 Generalities
 ============
 
