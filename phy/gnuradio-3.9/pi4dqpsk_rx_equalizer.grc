@@ -32,6 +32,23 @@ options:
     state: enabled
 
 blocks:
+- name: adaptative_alg
+  id: variable_adaptive_algorithm
+  parameters:
+    comment: ''
+    cons: constel_0
+    delta: '10.0'
+    ffactor: '0.99'
+    modulus: '1'
+    step_size: '0.01'
+    type: cma
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [504, 500.0]
+    rotation: 0
+    state: true
 - name: arity
   id: variable
   parameters:
@@ -72,7 +89,26 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 628]
+    coordinate: [400, 628.0]
+    rotation: 0
+    state: disabled
+- name: constel_0
+  id: variable_constellation
+  parameters:
+    comment: ''
+    const_points: '[1-1j, 1+1j, -1-1j, 1-1j]'
+    dims: '1'
+    normalization: digital.constellation.AMPLITUDE_NORMALIZATION
+    precision: '8'
+    rot_sym: '4'
+    soft_dec_lut: '''auto'''
+    sym_map: '[0, 1, 3, 2]'
+    type: dqpsk
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [624, 500.0]
     rotation: 0
     state: enabled
 - name: decim
@@ -186,23 +222,6 @@ blocks:
     coordinate: [480, 12]
     rotation: 0
     state: enabled
-- name: variable_adaptive_algorithm_0
-  id: variable_adaptive_algorithm
-  parameters:
-    comment: ''
-    cons: constel
-    delta: '10.0'
-    ffactor: '0.99'
-    modulus: '1'
-    step_size: 10e-3
-    type: cma
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [312, 628.0]
-    rotation: 0
-    state: true
 - name: analog_feedforward_agc_cc_0
   id: analog_feedforward_agc_cc
   parameters:
@@ -220,25 +239,7 @@ blocks:
     coordinate: [784, 300]
     rotation: 0
     state: enabled
-- name: blocks_file_sink_0
-  id: blocks_file_sink
-  parameters:
-    affinity: ''
-    alias: ''
-    append: 'False'
-    comment: ''
-    file: out.bits
-    type: byte
-    unbuffered: 'False'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [944, 612]
-    rotation: 180
-    state: disabled
-- name: blocks_udp_sink_0
+- name: blocks_udp_sink_1_0
   id: blocks_udp_sink
   parameters:
     affinity: ''
@@ -254,42 +255,42 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 708.0]
+    coordinate: [1064, 724.0]
     rotation: 0
     state: enabled
-- name: blocks_unpack_k_bits_bb_0
+- name: blocks_unpack_k_bits_bb_0_0
   id: blocks_unpack_k_bits_bb
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    k: constel.bits_per_symbol()
+    k: constel_0.bits_per_symbol()
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [944, 556]
+    coordinate: [1104, 652.0]
     rotation: 0
     state: enabled
-- name: digital_constellation_decoder_cb_0
+- name: digital_constellation_decoder_cb_0_0
   id: digital_constellation_decoder_cb
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    constellation: constel
+    constellation: constel_0
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [552, 556]
+    coordinate: [936, 516.0]
     rotation: 0
     state: enabled
-- name: digital_diff_phasor_cc_0
+- name: digital_diff_phasor_cc_0_0
   id: digital_diff_phasor_cc
   parameters:
     affinity: ''
@@ -301,7 +302,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [544, 464]
+    coordinate: [752, 424.0]
     rotation: 0
     state: enabled
 - name: digital_fll_band_edge_cc_0
@@ -321,7 +322,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [992, 264]
+    coordinate: [1032, 272.0]
     rotation: 0
     state: enabled
 - name: digital_linear_equalizer_0
@@ -329,7 +330,7 @@ blocks:
   parameters:
     adapt_after_training: 'True'
     affinity: ''
-    alg: variable_adaptive_algorithm_0
+    alg: adaptative_alg
     alias: ''
     comment: ''
     maxoutbuf: '0'
@@ -342,23 +343,23 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 516.0]
+    coordinate: [504, 392.0]
     rotation: 0
-    state: true
-- name: digital_map_bb_0
+    state: enabled
+- name: digital_map_bb_0_0
   id: digital_map_bb
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    map: constel.pre_diff_code()
+    map: constel_0.pre_diff_code()
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [792, 556]
+    coordinate: [1112, 572.0]
     rotation: 0
     state: enabled
 - name: digital_pfb_clock_sync_xxx_0
@@ -381,7 +382,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [56, 492.0]
+    coordinate: [224, 368.0]
     rotation: 0
     state: enabled
 - name: freq_xlating_fir_filter_xxx_0
@@ -438,13 +439,13 @@ blocks:
 - name: network_udp_sink_0
   id: network_udp_sink
   parameters:
-    addr: localhost
+    addr: 127.0.0.1
     affinity: ''
     alias: ''
     comment: ''
     header: '0'
-    payloadsize: '8972'
-    port: '42000'
+    payloadsize: '1472'
+    port: '42001'
     send_eof: 'False'
     type: byte
     vlen: '1'
@@ -452,10 +453,10 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [912, 688.0]
-    rotation: 180
+    coordinate: [832, 716.0]
+    rotation: 0
     state: disabled
-- name: qtgui_const_sink_x_0_0
+- name: qtgui_const_sink_x_0_0_0
   id: qtgui_const_sink_x
   parameters:
     affinity: ''
@@ -484,7 +485,7 @@ blocks:
     color9: '"red"'
     comment: ''
     grid: 'False'
-    gui_hint: '[4,0,1,2]'
+    gui_hint: '[5,0,1,2]'
     label1: ''
     label10: ''
     label2: other rx
@@ -544,7 +545,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [768, 444]
+    coordinate: [1032, 404.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -962,21 +963,20 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [56, 136.0]
+    coordinate: [56, 132.0]
     rotation: 0
     state: enabled
 
 connections:
 - [analog_feedforward_agc_cc_0, '0', digital_fll_band_edge_cc_0, '0']
-- [blocks_unpack_k_bits_bb_0, '0', blocks_file_sink_0, '0']
-- [blocks_unpack_k_bits_bb_0, '0', blocks_udp_sink_0, '0']
-- [blocks_unpack_k_bits_bb_0, '0', network_udp_sink_0, '0']
-- [digital_constellation_decoder_cb_0, '0', digital_map_bb_0, '0']
-- [digital_diff_phasor_cc_0, '0', digital_constellation_decoder_cb_0, '0']
-- [digital_diff_phasor_cc_0, '0', qtgui_const_sink_x_0_0, '0']
+- [blocks_unpack_k_bits_bb_0_0, '0', blocks_udp_sink_1_0, '0']
+- [blocks_unpack_k_bits_bb_0_0, '0', network_udp_sink_0, '0']
+- [digital_constellation_decoder_cb_0_0, '0', digital_map_bb_0_0, '0']
+- [digital_diff_phasor_cc_0_0, '0', digital_constellation_decoder_cb_0_0, '0']
+- [digital_diff_phasor_cc_0_0, '0', qtgui_const_sink_x_0_0_0, '0']
 - [digital_fll_band_edge_cc_0, '0', digital_pfb_clock_sync_xxx_0, '0']
-- [digital_linear_equalizer_0, '0', digital_diff_phasor_cc_0, '0']
-- [digital_map_bb_0, '0', blocks_unpack_k_bits_bb_0, '0']
+- [digital_linear_equalizer_0, '0', digital_diff_phasor_cc_0_0, '0']
+- [digital_map_bb_0_0, '0', blocks_unpack_k_bits_bb_0_0, '0']
 - [digital_pfb_clock_sync_xxx_0, '0', digital_linear_equalizer_0, '0']
 - [freq_xlating_fir_filter_xxx_0, '0', mmse_resampler_xx_0, '0']
 - [mmse_resampler_xx_0, '0', analog_feedforward_agc_cc_0, '0']

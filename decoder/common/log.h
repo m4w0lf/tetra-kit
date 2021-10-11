@@ -13,11 +13,11 @@ namespace Tetra {
      */
 
     enum LogLevel {
-        NONE     = 0,
-        LOW      = 1,
-        MEDIUM   = 2,
-        HIGH     = 3,
-        VERYHIGH = 4
+        NONE,
+        LOW,
+        MEDIUM,
+        HIGH,
+        VERYHIGH
     };
 
     /**

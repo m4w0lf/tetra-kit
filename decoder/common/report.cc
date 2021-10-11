@@ -36,8 +36,6 @@ Report::~Report()
 
 void Report::start(std::string service, std::string pdu, const TetraTime tetraTime, const MacAddress macAddress)
 {
-    //start(service.c_str(), pdu.c_str());
-
     m_jdoc.SetObject();                                                           // create empty Json DOM
 
     add("service", service);
@@ -102,9 +100,7 @@ void Report::start(std::string service, std::string pdu, const TetraTime tetraTi
 
 void Report::startUPlane(std::string service, std::string pdu, const TetraTime tetraTime, const MacAddress macAddress)
 {
-    //start(service.c_str(), pdu.c_str());
-
-    m_jdoc.SetObject();                                                           // create empty Json DOM
+    m_jdoc.SetObject();                                                         // create empty Json DOM
 
     add("service", service);
     add("pdu",     pdu);

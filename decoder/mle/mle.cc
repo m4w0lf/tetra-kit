@@ -31,7 +31,7 @@ Mle::~Mle()
 void Mle::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime tetraTime, MacAddress macAddress)
 {
     Layer::service(macLogicalChannel, tetraTime, macAddress);
-    
+
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s pdu = %s\n", "service_mle", macLogicalChannelName(macLogicalChannel).c_str(), pdu.toString().c_str());
 
     std::string txt   = "";
@@ -116,7 +116,7 @@ void Mle::serviceMleSubsystem(Pdu pdu, MacLogicalChannel macLogicalChannel)
     std::string txt = "";
 
     uint32_t pos = 0;
-    
+
     uint8_t pduType = pdu.getValue(pos, 3);
     pos += 3;
 
@@ -345,9 +345,9 @@ void Mle::processDNwrkBroadcastExtension(Pdu pdu)
 
     uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
-    if (oFlag)                                                                 // there is type2 or type3/4 fields
+    if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;

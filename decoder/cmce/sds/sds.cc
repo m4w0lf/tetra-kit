@@ -9,7 +9,15 @@ using namespace Tetra;
 
 Sds::Sds(Log * log, Report * report) : Layer(log, report)
 {
-
+    //
+    // LIP is more a sub-layer of SDS than a layer, so it won't handle
+    // the report creation and sending. It will only complete it with
+    // informations.
+    //
+    // That's why it can be created here while sds is created in main
+    // decoder class
+    //
+    m_lip = new Lip(m_log, m_report);
 }
 
 /**
@@ -19,7 +27,7 @@ Sds::Sds(Log * log, Report * report) : Layer(log, report)
 
 Sds::~Sds()
 {
-
+    delete(m_lip);
 }
 
 /**
@@ -264,13 +272,11 @@ void Sds::parseType4Data(Pdu pdu, const uint16_t len)
             break;
 
         case 0b00000100:
-            m_report->add("protocol info", "wireless datagram protocol");
-            // 29.5.8
+            m_report->add("protocol info", "wireless datagram protocol");       // 29.5.8
             break;
 
         case 0b00000101:
-            m_report->add("protocol info", "wireless control message protocol");
-            // 29.5.8
+            m_report->add("protocol info", "wireless control message protocol"); // 29.5.8
             break;
 
         case 0b00000110:
@@ -291,10 +297,9 @@ void Sds::parseType4Data(Pdu pdu, const uint16_t len)
             break;
 
         case 0b00001010:
-            m_report->add("protocol info", "location information protocol");    // 29.5.12 - TS 100 392-18 v1.7.2
-            sdu = Pdu(pdu, pos, (int32_t)len - (int32_t)pos);                   //utils_substract(len, pos));
-            // FIXME TODO
-            //cmce_sds_service_location_information_protocol(sdu);                // LIP service
+            m_report->add("protocol info", "location information protocol");    // 29.5.12 - TS 100 392-18 v1.7.2 - LIP service
+            sdu = Pdu(pdu, pos, (int32_t)len - (int32_t)pos);
+            m_lip->service(sdu, m_macLogicalChannel, m_tetraTime, m_macAddress);
             break;
 
         case 0b00001011:
@@ -527,21 +532,21 @@ void Sds::parseSimpleTextMessaging(Pdu pdu, const uint16_t len)
     m_report->add("text coding scheme", textCodingScheme);
 
     std::string txt = "";
-    int32_t sduLength = (int32_t)len - (int32_t)pos;                            // utils_substract(len, pos);
+    int32_t sduLength = (int32_t)len - (int32_t)pos;
 
     if (textCodingScheme == 0b0000000)                                          // GSM 7-bit alphabet - see 29.5.4.3
     {
-        txt = pdu.textGsm7BitDecode(sduLength);                                 //text_gsm_7_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGsm7BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else if (textCodingScheme <= 0b0011001)                                     // 8 bit alphabets
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);                             //text_generic_8_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else                                                                        // try generic 8 bits alphabet since we already have the full hexadecimal SDU
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);                             //text_generic_8_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
 }
@@ -574,21 +579,21 @@ void Sds::parseTextMessagingWithSdsTl(Pdu pdu)
     }
 
     std::string txt = "";
-    int32_t sduLength = (int32_t)len - (int32_t)pos;                            //utils_substract(len, pos);
+    int32_t sduLength = (int32_t)len - (int32_t)pos;
 
     if (textCodingScheme == 0b0000000)                                          // GSM 7-bit alphabet - see 29.5.4.3
     {
-        txt = pdu.textGsm7BitDecode(sduLength);                                 //text_gsm_7_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGsm7BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else if (textCodingScheme <= 0b0011001)                                     // 8 bit alphabets
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);                             //text_generic_8_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else                                                                        // try generic 8 bits alphabet since we already have the full hexadecimal SDU
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);                             //text_generic_8_bit_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
 }
@@ -615,7 +620,7 @@ void Sds::parseSimpleLocationSystem(Pdu pdu, const uint16_t len)
     switch (locationSystemCoding)
     {
     case 0b00000000:                                                            // NMEA 0183 - see Annex L
-        txt = pdu.locationNmeaDecode(sduLength);                                // location_nmea_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.locationNmeaDecode(sduLength);
         m_report->add("infos", txt);
         break;
 
@@ -656,7 +661,7 @@ void Sds::parseLocationSystemWithSdsTl(Pdu pdu)
     switch (locationSystemCoding)
     {
     case 0b00000000:                                                            // NMEA 0183 - see Annex L
-        txt = pdu.locationNmeaDecode(sduLength);                                // location_nmea_decode(Pdu(pdu, pos, sduLength), sduLength);
+        txt = pdu.locationNmeaDecode(sduLength);
         m_report->add("infos", txt);
         break;
 

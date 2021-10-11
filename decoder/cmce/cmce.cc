@@ -111,7 +111,7 @@ void Cmce::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime
     case 0b01000:
         txt = "D-STATUS";
         m_sds->service(pdu, m_macLogicalChannel, m_tetraTime, m_macAddress);    // this pdu is handled by the SDS sub-entity see 14.7.1.10
-        //cmce_sds_parse_d_status(pdu);                                       
+        //cmce_sds_parse_d_status(pdu);
         bCompletePrint = false;
         break;
 
@@ -166,7 +166,7 @@ void Cmce::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime
     case 0b01111:
         txt = "D-SDS-DATA";
         m_sds->service(pdu, m_macLogicalChannel, m_tetraTime, m_macAddress);    // this pdu is handled by the SDS sub-entity see 14.7.1.11
-        //cmce_sds_parse_d_sds_data(pdu);  
+        //cmce_sds_parse_d_sds_data(pdu);
         bCompletePrint = false;
         break;
 
@@ -281,11 +281,11 @@ void Cmce::parseDCallRestore(Pdu pdu)
     m_report->add("reset call time-out timer T310", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
-    if (oFlag)                                                                 // there is type2 or type3/4 fields
+    if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -367,11 +367,11 @@ void Cmce::parseDConnect(Pdu pdu)
     m_report->add("call ownership", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
-    if (oFlag)                                                                 // there is type2 or type3/4 fields
+    if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -446,12 +446,12 @@ void Cmce::parseDConnectAck(Pdu pdu)
     m_report->add("transmission request permission", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -486,12 +486,12 @@ void Cmce::parseDDisconnect(Pdu pdu)
     m_report->add("disconnect cause", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -529,12 +529,12 @@ void Cmce::parseDInfo(Pdu pdu)
     m_report->add("poll request", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -641,12 +641,12 @@ void Cmce::parseDRelease(Pdu pdu)
     m_report->add("disconnect cause", pdu.getValue(pos, 5));
     pos += 5;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -699,12 +699,12 @@ void Cmce::parseDSetup(Pdu pdu)
     m_report->add("call priority", pdu.getValue(pos, 4));
     pos += 4;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -724,7 +724,7 @@ void Cmce::parseDSetup(Pdu pdu)
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
-        if (pFlag)                                                             // calling party type identifier
+        if (pFlag)                                                              // calling party type identifier
         {
             uint8_t cpti = pdu.getValue(pos, 2);
             pos += 2;
@@ -778,12 +778,12 @@ void Cmce::parseDTxCeased(Pdu pdu)
     m_report->add("transmission request permission", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -821,12 +821,12 @@ void Cmce::parseDTxContinue(Pdu pdu)
     m_report->add("transmission request permission", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -869,12 +869,12 @@ void Cmce::parseDTxGranted(Pdu pdu)
 
     pos += 1;                                                                   // reserved and must be set to 0
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -945,12 +945,12 @@ void Cmce::parseDTxInterrupt(Pdu pdu)
 
     pos += 1;                                                                   // reserved and must be set to 0
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
@@ -1013,12 +1013,12 @@ void Cmce::parseDTxWait(Pdu pdu)
     m_report->add("transmission request permission", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                    // option flag
+    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
     pos += 1;
 
-    if (oFlag)                                                                 // there is type2, type3 or type4 fields
+    if (oFlag)                                                                  // there is type2, type3 or type4 fields
     {
-        uint8_t pFlag;                                                         // presence flag
+        uint8_t pFlag;                                                          // presence flag
 
         pFlag = pdu.getValue(pos, 1);
         pos += 1;

@@ -102,19 +102,23 @@ TetraTime Mac::getTime()
 void Mac::incrementTn()
 {
     m_tetraTime.tn++;
-    if (m_tetraTime.tn > 4)                                                          // time slot
+
+    // time slot
+    if (m_tetraTime.tn > 4)
     {
         m_tetraTime.fn++;
         m_tetraTime.tn = 1;
     }
 
-    if (m_tetraTime.fn > 18)                                                         // frame number
+    // frame number
+    if (m_tetraTime.fn > 18)
     {
         m_tetraTime.mn++;
         m_tetraTime.fn = 1;
     }
 
-    if (m_tetraTime.mn > 60)                                                         // multi-frame number
+    // multi-frame number
+    if (m_tetraTime.mn > 60)
     {
         m_tetraTime.mn = 1;
     }
@@ -761,7 +765,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
             break;
         }
 
-        if (pdu.getValue(pos, 1))                                             // power control flag
+        if (pdu.getValue(pos, 1))                                               // power control flag
         {
             pos += 1 + 4;
         }
@@ -770,7 +774,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
             pos += 1;
         }
 
-        if (pdu.getValue(pos, 1))                                             // slot granting flag
+        if (pdu.getValue(pos, 1))                                               // slot granting flag
         {
             pos += 1 + 8;
         }
@@ -897,7 +901,7 @@ void Mac::pduProcessMacFrag(Pdu mac_pdu)
         pdu = removeFillBits(pdu);
     }
 
-    Pdu sdu = Pdu(pdu, pos);                                                    // vector_extract(pdu, pos, utils_substract(pdu.size(), pos));
+    Pdu sdu = Pdu(pdu, pos);
 
     m_macDefrag->append(sdu, m_macAddress);
 }
@@ -935,7 +939,7 @@ Pdu Mac::pduProcessMacEnd(Pdu mac_pdu)
 
     if ((val < 0b000010) || (val > 0b100010))                                   // reserved
     {
-        return Pdu(); // null_pdu;
+        return Pdu();
     }
 
     //uint32_t length = decodeLength(val);                                     // convert length in bytes (includes MAC PDU header + TM_SDU length)
@@ -1148,7 +1152,7 @@ Pdu Mac::pduProcessSync(Pdu pdu)
         m_report->start("MAC", "SYNC", m_tetraTime, m_macAddress);
         m_report->send();
 
-        if ((m_tetraTime.fn == 18) && ((m_tetraTime.mn + m_tetraTime.tn) % 4 == 3))
+        if ((m_tetraTime.fn == 18) && (((m_tetraTime.mn + m_tetraTime.tn) % 4) == 3))
         {
             printf("BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",
                    m_tetraTime.tn,

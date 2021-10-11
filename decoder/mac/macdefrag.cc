@@ -2,7 +2,7 @@
 
 using namespace Tetra;
 
-static const int DEBUG_VAL = 3;                                                 // start debug informations at level 1
+static const int DEBUG_VAL = 3;                                                 // start debug informations at this level
 
 /**
  * @brief Defragmenter constructor
@@ -50,7 +50,7 @@ void MacDefrag::start(const MacAddress address, const TetraTime timeSlot)
         }
     }
 
-    macAddress     = address;                                                  // at this point, the defragmenter MAC address contains encryption mode
+    macAddress     = address;                                                   // at this point, the defragmenter MAC address contains encryption mode
     startTime      = timeSlot;
     m_fragmentsCount = 0;
 
@@ -63,7 +63,7 @@ void MacDefrag::start(const MacAddress address, const TetraTime timeSlot)
                startTime.mn);
     }
 
-    m_sdu.clear();                                                             // clear the buffer
+    m_sdu.clear();                                                              // clear the buffer
 
     b_stopped = false;
 }
@@ -82,7 +82,7 @@ void MacDefrag::append(Pdu sdu, const MacAddress address)
             printf("  * DEFRAG APPEND   : FAILED SSI = %u\n", address.ssi);
         }
     }
-    else if (address.ssi != macAddress.ssi)                                    // check mac addresses
+    else if (address.ssi != macAddress.ssi)                                     // check mac addresses
     {
         stop();                                                                 // stop defragmenter
 
@@ -156,7 +156,7 @@ Pdu MacDefrag::getSdu(uint8_t * encryptionMode, uint8_t * usageMarker)
 void MacDefrag::stop()
 {
     // clean stop
-    b_stopped       = true;
+    b_stopped = true;
     m_fragmentsCount = 0;
     m_sdu.clear();
 }

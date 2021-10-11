@@ -82,3 +82,30 @@ std::string Tetra::formatStr(const char * fmt, ...)
 
     return std::string(buf);
 }
+
+/**
+ * @brief Decode floating point value coded as 2's complement integer
+ *
+ */
+
+double Tetra::decodeIntegerTwosComplement(uint32_t data, uint8_t nBits, double mult)
+{
+    double res;
+
+    uint32_t val = data;
+
+    if (val & (1 << (nBits - 1)))                                               // negative value, take the 2's complement
+    {
+        val = ~val;                                                             // flip bits
+        val += 1;                                                               // add one
+        val &= (0xFFFFFFFF >> (32 - nBits));                                    // mask bits
+
+        res = val * (-mult) / (double)(1 << (nBits - 1));
+    }
+    else                                                                        // positive value
+    {
+        res = val * mult / (double)(1 << (nBits - 1));
+    }
+
+    return res;
+}

@@ -7,12 +7,11 @@ using namespace Tetra;
  *
  */
 
-TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits)
+TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel)
 {
     m_socketFd = socketFd;
 
-    //m_log       = new Log(LogLevel::VERYHIGH);
-    m_log       = new Log(LogLevel::LOW);
+    m_log       = new Log(logLevel);
 
     m_report    = new Report(m_socketFd, m_log);
     m_tetraCell = new TetraCell();
@@ -92,18 +91,23 @@ bool TetraDecoder::rxSymbol(uint8_t sym)
 
     bool clearedFlag = false;
 
-    if (frameFound || (m_bIsSynchronized && ((m_syncBitCounter % 510) == 0)))     // the frame can be processed either by presence of training sequence, either by synchronised and still allowed missing frames
+    if (frameFound || (m_bIsSynchronized && ((m_syncBitCounter % 510) == 0)))   // the frame can be processed either by presence of training sequence, either by synchronised and still allowed missing frames
     {
         m_mac->incrementTn();
         processFrame();
-        m_frame.clear();                                                        // frame has been processed, clear it
-        clearedFlag = true;                                                     // set flag to prevent erasing first bit in frame
+
+        // frame has been processed, so clear it
+        m_frame.clear();
+
+        // set flag to prevent erasing first bit in frame
+        clearedFlag = true;
     }
 
     m_syncBitCounter--;
 
-    if (m_syncBitCounter <= 0)                                                // synchronization is lost
+    if (m_syncBitCounter <= 0)
     {
+        // synchronization is lost
         printf("* synchronization lost\n");
         m_bIsSynchronized  = false;
         m_syncBitCounter = 0;
@@ -111,7 +115,8 @@ bool TetraDecoder::rxSymbol(uint8_t sym)
 
     if (!clearedFlag)
     {
-        m_frame.erase(m_frame.begin());                               // remove first symbol from buffer to make space for next one
+        // remove first symbol from buffer to make space for next one
+        m_frame.erase(m_frame.begin());
     }
 
     return frameFound;
@@ -163,8 +168,9 @@ void TetraDecoder::processFrame()
         burstType = NDB_SF;
     }
 
-    if (scoreMin <= 5)                                                          // valid burst found, send it to MAC
+    if (scoreMin <= 5)
     {
+        // valid burst found, send it to MAC
         m_mac->serviceLowerMac(m_frame, burstType);
     }
 }

@@ -6,6 +6,7 @@
 #include "../../common/log.h"
 #include "../../common/report.h"
 #include "../../common/utils.h"
+#include "lip.h"
 
 namespace Tetra {
 
@@ -17,6 +18,8 @@ namespace Tetra {
         void service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime tetraTime, MacAddress macAddress);
 
     private:
+        Lip * m_lip;
+
         void parseDSdsData(Pdu pdu);
         void parseDStatus(Pdu pdu);
         void parseType4Data(Pdu pdu, const uint16_t len);
@@ -25,6 +28,7 @@ namespace Tetra {
         void parseTextMessagingWithSdsTl(Pdu pdu);
         void parseSimpleLocationSystem(Pdu pdu, const uint16_t len);
         void parseLocationSystemWithSdsTl(Pdu pdu);
+        void parseLip(Pdu pdu);
     };
 
 };

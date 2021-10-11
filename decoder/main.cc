@@ -33,25 +33,6 @@ static void sigint_handler(int val)
  *
  */
 
-/*int main(void)
-{
-    // Log    * log    = new Log();
-    // Report * report = new Report(0, log);
-    // Layer  * mle    = new Layer();
-    // Llc    * llc    = new Llc(mle, log, report);
-
-    // delete log;
-    // delete report;
-    // delete mle;
-    // delete llc;
-
-    Tetra::TetraDecoder * dec = new Tetra::TetraDecoder();
-
-    delete dec;
-
-    return 0;
-    }*/
-
 int main(int argc, char * argv[])
 {
     // connect interrupt Ctrl-C handler
@@ -59,12 +40,12 @@ int main(int argc, char * argv[])
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, 0);
 
-    int udpPortRx = 42000;                                                    // UDP RX port (ie. where to receive bits from PHY layer)
-    int udpPortTx = 42100;                                                    // UDP TX port (ie. where to send Json data)
+    int udpPortRx = 42000;                                                      // UDP RX port (ie. where to receive bits from PHY layer)
+    int udpPortTx = 42100;                                                      // UDP TX port (ie. where to send Json data)
 
     const int FILENAME_LEN = 256;
-    char optFilenameInput[FILENAME_LEN]  = "";                                   // input bits filename
-    char optFilenameOutput[FILENAME_LEN] = "";                                   // output bits filename
+    char optFilenameInput[FILENAME_LEN]  = "";                                  // input bits filename
+    char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
     int programMode = STANDARD_MODE;
     int debugLevel = 0;
@@ -129,10 +110,6 @@ int main(int argc, char * argv[])
     addr_output.sin_port = htons(udpPortTx);
     inet_aton("127.0.0.1", &addr_output.sin_addr);
 
-    // connect UDP tx socket to decoder
-    //decoder->socketFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    //connect(decoder->socketFd, (struct sockaddr *) & addr_output, sizeof(struct sockaddr));
-    //printf("Output socket 0x%04x on port %d\n", decoder->socketFd, udpPortTx);
     int udpSocketFd  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     connect(udpSocketFd, (struct sockaddr *) & addr_output, sizeof(struct sockaddr));
     printf("Output socket 0x%04x on port %d\n", udpSocketFd, udpPortTx);
@@ -143,15 +120,35 @@ int main(int argc, char * argv[])
     }
 
     // create decoder
-    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(udpSocketFd, bRemoveFillBits);
+    Tetra::LogLevel logLevel;
+    switch (debugLevel)
+    {
+    case 0:
+        logLevel = Tetra::LogLevel::NONE;
+        break;
+    case 1:
+        logLevel = Tetra::LogLevel::LOW;
+        break;
+    case 2:
+        logLevel = Tetra::LogLevel::MEDIUM;
+        break;
+    case 3:
+        logLevel = Tetra::LogLevel::HIGH;
+        break;
+    case 4:
+        logLevel = Tetra::LogLevel::VERYHIGH;
+        break;
+    default:
+        logLevel = Tetra::LogLevel::LOW;
 
-
+    }
 
     // output file if any
     int fdOutputSaveFile = 0;
 
-    if (programMode & SAVE_TO_BINARY_FILE)                                     // save input bits to file
+    if (programMode & SAVE_TO_BINARY_FILE)
     {
+        // save input bits to file
         fdOutputSaveFile = open(optFilenameOutput, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
         if (fdOutputSaveFile < 0)
         {
@@ -163,8 +160,9 @@ int main(int argc, char * argv[])
     // input source
     int fdInput = 0;
 
-    if (programMode & READ_FROM_BINARY_FILE)                                   // read input bits from file
+    if (programMode & READ_FROM_BINARY_FILE)
     {
+        // read input bits from file
         fdInput = open(optFilenameInput, O_RDONLY);
 
         printf("Input from file '%s' 0x%04x\n", optFilenameInput, fdInput);
@@ -175,8 +173,9 @@ int main(int argc, char * argv[])
             exit(EXIT_FAILURE);
         }
     }
-    else                                                                        // read input bits from UDP socket
+    else
     {
+        // read input bits from UDP socket
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(struct sockaddr_in));
         addr.sin_family = AF_INET;
@@ -195,6 +194,9 @@ int main(int argc, char * argv[])
         }
     }
 
+    // create decoder
+    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(udpSocketFd, bRemoveFillBits, logLevel);
+
     // receive buffer
     const int RXBUF_LEN = 1024;
     uint8_t rxBuf[RXBUF_LEN];
@@ -205,7 +207,8 @@ int main(int argc, char * argv[])
 
         if (errno == EINTR)
         {
-            fprintf(stderr, "EINTR\n");                                         // print is required for ^C to be handled
+            // print is required for ^C to be handled
+            fprintf(stderr, "EINTR\n");
             break;
         }
         else if (bytesRead < 0)
@@ -223,17 +226,20 @@ int main(int argc, char * argv[])
             write(fdOutputSaveFile, rxBuf, bytesRead);
         }
 
+        // bytes must be pushed one at a time into decoder
         for (int cnt = 0; cnt < bytesRead; cnt++)
         {
-            decoder->rxSymbol(rxBuf[cnt]);                                    // bytes must be pushed one at a time into decoder
+            decoder->rxSymbol(rxBuf[cnt]);
         }
     }
 
     close(udpSocketFd);
 
-    close(fdInput);                                                            // file or socket must be closed
+    // file or socket must be closed
+    close(fdInput);
 
-    if (programMode & SAVE_TO_BINARY_FILE)                                     // close save file only if openede
+    // close save file only if openede
+    if (programMode & SAVE_TO_BINARY_FILE)
     {
         close(fdOutputSaveFile);
     }

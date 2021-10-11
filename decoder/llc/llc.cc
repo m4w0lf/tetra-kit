@@ -36,7 +36,7 @@ void Llc::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
     // call base class function
     Layer::service(macLogicalChannel, tetraTime, macAddress);
     
-     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s pdu = %s\n", "service_llc", (macLogicalChannelName(macLogicalChannel)).c_str(), pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s pdu = %s\n", "service_llc", (macLogicalChannelName(macLogicalChannel)).c_str(), pdu.toString().c_str());
        
     if (macLogicalChannel == BSCH)                                              // TM-SDU is directly sent to MLE
     {

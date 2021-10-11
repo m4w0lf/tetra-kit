@@ -272,7 +272,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 440]
+    coordinate: [336, 500.0]
     rotation: 0
     state: enabled
 - name: digital_constellation_decoder_cb_0

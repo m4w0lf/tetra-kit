@@ -62,7 +62,7 @@ namespace Tetra {
     
     class TetraDecoder {
     public:
-        TetraDecoder(int socketFd, bool bRemoveFillBits);
+        TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel);
         ~TetraDecoder();
         
         void printData();

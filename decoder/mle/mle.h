@@ -21,7 +21,7 @@ namespace Tetra {
     private:
         Layer * m_cmce;
         Layer * m_sndcp;
-        
+
         void serviceMleSubsystem(Pdu pdu, MacLogicalChannel macLogicalChannel);
         void processDNwrkBroadcast(Pdu pdu);
         void processDNwrkBroadcastExtension(Pdu pdu);
