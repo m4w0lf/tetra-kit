@@ -32,6 +32,10 @@ void Mm::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime t
     Layer::service(macLogicalChannel, tetraTime, macAddress);
 
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s pdu = %s\n", "service_mm", macLogicalChannelName(macLogicalChannel).c_str(), pdu.toString().c_str());
+
+    std::string txt = pdu.toString();
+    
+    printf("serv_mm_sub : TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu \n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), pdu.size());
 }
 
 /**
