@@ -21,9 +21,10 @@
 #include "uplane/uplane.h"
 #include "llc/llc.h"
 #include "mle/mle.h"
-#include "sndcp/sndcp.h"
 #include "cmce/cmce.h"
 #include "cmce/sds/sds.h"
+#include "mm/mm.h"
+#include "sndcp/sndcp.h"
 
 /**
  * @defgroup tetra_common TETRA downlink decoder
@@ -93,6 +94,7 @@ namespace Tetra {
         Llc    * m_llc;                                                         ///< LLC layer
         Mle    * m_mle;                                                         ///< MLE layer
         Cmce   * m_cmce;                                                        ///< CMCE layer
+        Mm     * m_mm;                                                          ///< MM layer
         Sds    * m_sds;                                                         ///< CMCE/SDS sub layer
         Sndcp  * m_sndcp;                                                       ///< SNDCP layer
 

@@ -6,8 +6,7 @@ TETRA downlink decoder/recorder kit
 
 NOTES
 =====
-* Version 1.0
-The decoder has now one class per layer to improve Tetra stack clarity and make future development easier:
+Starting with version 1.0, the decoder now has one class per layer to improve Tetra stack clarity and make future development easier:
 - a`Pdu` class has been defined to replace `vector<uint8_t>`
 - all layers has been unified
 - a layer now calls upper layer through the `service()` layer function

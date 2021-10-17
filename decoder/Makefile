@@ -8,6 +8,7 @@ SRC = main.cc decoder.cc \
 	mle/mle.cc \
 	sndcp/sndcp.cc \
 	cmce/cmce.cc cmce/sds/sds.cc cmce/sds/lip.cc \
+	mm/mm.cc \
 	uplane/uplane.cc \
 	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc
 

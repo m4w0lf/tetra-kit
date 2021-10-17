@@ -7,9 +7,10 @@ using namespace Tetra;
  *
  */
 
-Mle::Mle(Log * log, Report * report, Layer * cmce, Sndcp * sndcp) : Layer(log, report)
+Mle::Mle(Log * log, Report * report, Layer * cmce, Layer * mm, Layer * sndcp) : Layer(log, report)
 {
     m_cmce = cmce;
+    m_mm = mm;
     m_sndcp = sndcp;
 }
 
@@ -70,6 +71,7 @@ void Mle::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
 
         case 0b001:                                                             // transparent -> remove discriminator and send directly to MM
             txt = "MM";
+            m_mm->service(Pdu(pdu, pos), macLogicalChannel, m_tetraTime, m_macAddress);
             break;
 
         case 0b010:

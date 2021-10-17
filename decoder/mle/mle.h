@@ -7,19 +7,21 @@
 #include "../common/report.h"
 #include "../common/utils.h"
 #include "../cmce/cmce.h"
+#include "../mm/mm.h"
 #include "../sndcp/sndcp.h"
 
 namespace Tetra {
 
     class Mle : public Layer {
     public:
-        Mle(Log * log, Report * report, Layer * cmce, Sndcp * sndcp);
+        Mle(Log * log, Report * report, Layer * cmce, Layer * mm, Layer * sndcp);
         ~Mle();
 
         void service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime tetraTime, MacAddress macAddress);
 
     private:
         Layer * m_cmce;
+        Layer * m_mm;
         Layer * m_sndcp;
 
         void serviceMleSubsystem(Pdu pdu, MacLogicalChannel macLogicalChannel);

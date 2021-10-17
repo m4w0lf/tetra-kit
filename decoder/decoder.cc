@@ -18,8 +18,9 @@ TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel lo
 
     m_sds    = new Sds(m_log, m_report);
     m_cmce   = new Cmce(m_log, m_report, m_sds);
+    m_mm     = new Mm(m_log, m_report);
     m_sndcp  = new Sndcp(m_log, m_report);
-    m_mle    = new Mle(m_log, m_report, m_cmce, m_sndcp);
+    m_mle    = new Mle(m_log, m_report, m_cmce, m_mm, m_sndcp);
     m_llc    = new Llc(m_log, m_report, m_mle);
     m_uPlane = new UPlane(m_log, m_report);
     m_mac    = new Mac(m_log, m_report, m_tetraCell, m_uPlane, m_llc, m_mle, bRemoveFillBits);
@@ -37,12 +38,17 @@ TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel lo
 
 TetraDecoder::~TetraDecoder()
 {
+    delete m_mac;
+    delete m_uPlane;
+    delete m_llc;
+    delete m_mle;
+    delete m_sndcp;
+    delete m_mm;
+    delete m_cmce;
+    delete m_sds;
     delete m_tetraCell;
     delete m_log;
     delete m_report;
-    delete m_mac;
-    delete m_mle;
-    delete m_llc;
 }
 
 /**
