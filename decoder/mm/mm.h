@@ -18,6 +18,37 @@ namespace Tetra {
 
     private:
         void parseXXX(Pdu pdu);
+        void parseDOtar(Pdu pdu);
+        void parseDOtarCckProvide(Pdu pdu);
+        void parseDOtarSckProvide(Pdu pdu);
+        void parseDOtarSckReject(Pdu pdu);
+        void parseDOtarGckProvide(Pdu pdu);
+        void parseDOtarGckReject(Pdu pdu);
+        void parseDOtarKeyAssociateDemand(Pdu pdu);
+        void parseDOtarNewcell(Pdu pdu);
+        void parseDOtarGskoProvide(Pdu pdu);
+        void parseDOtarGskoReject(Pdu pdu);
+        void parseDOtarKeyDeleteDemand(Pdu pdu);
+        void parseDOtarKeyStatusDemand(Pdu pdu);
+        void parseDOtarCmgGtsiProvide(Pdu pdu);
+        void parseDOtarDmSckActivate(Pdu pdu);
+        void parseDAuthentication(Pdu pdu);
+        void parseDAuthenticationDemand(Pdu pdu);
+        void parseDAuthenticationResponse(Pdu pdu);
+        void parseDAuthenticationResult(Pdu pdu);
+        void parseDAuthenticationReject(Pdu pdu);
+        void parseDCkChangeDemand(Pdu pdu);
+        void parseDDisable(Pdu pdu);
+        void parseDEnable(Pdu pdu);
+        void parseDLocationUpdateAccept(Pdu pdu);
+        void parseType34Elements(Pdu pdu, uint64_t pos);
+        void parseDLocationUpdateCommand(Pdu pdu);
+        void parseDLocationUpdateReject(Pdu pdu);
+        void parseDLocationUpdateProceeding(Pdu pdu);
+        void parseDAttachDetachGroupIdentity(Pdu pdu);
+        void parseDAttachDetachGroupIdentityAck(Pdu pdu);
+        void parseDMmStatus(Pdu pdu);
+        std::string valueToString(std::string key, uint32_t val);
     };
 
 };
