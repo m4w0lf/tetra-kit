@@ -11,110 +11,72 @@ void Mm::parseDOtar(Pdu pdu)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_otar", pdu.toString().c_str());
 
-    m_report->start("MM", "D-OTAR", m_tetraTime, m_macAddress);
-
     uint32_t pos = 4;                                                           // pdu type
     uint32_t otarSubtype = pdu.getValue(pos, 4);
-    std::string txt = "";
-    pos += 4;
 
     // Table A.85 (downlink only)
 
     switch (otarSubtype)
     {
     case 0b0000:
-        txt = "D-OTAR CCK Provide";
         parseDOtarCckProvide(pdu);
-        pos += 4;
         break;
 
     case 0b0001:
-        txt = "D-OTAR CCK REJECT";
         //parseDOtarCckReject(pdu);                                             // couldn't find documentation
-        pos += 4;
         break;
 
     case 0b0010:
-        txt = "D-OTAR SCK Provide";
         parseDOtarSckProvide(pdu);
-        pos += 4;
         break;
 
     case 0b0011:
-        txt = "D-OTAR SCK Reject";
         parseDOtarSckReject(pdu);
-        pos += 4;
         break;
 
     case 0b0100:
-        txt = "D-OTAR GCK Provide";
         parseDOtarGckProvide(pdu);
-        pos += 4;
         break;
 
     case 0b0101:
-        txt = "D-OTAR GCK Reject";
         parseDOtarGckReject(pdu);
-        pos += 4;
         break;
 
     case 0b0110:
-        txt = "D-OTAR KEY ASSOCIATE demand";
         parseDOtarKeyAssociateDemand(pdu);
-        pos += 4;
         break;
 
     case 0b0111:
-        txt = "D-OTAR NEWCELL";
         parseDOtarNewcell(pdu);
-        pos += 4;
         break;
 
     case 0b1000:
-        txt = "D-OTAR GSKO Provide";
         parseDOtarGskoProvide(pdu);
-        pos += 4;
         break;
 
     case 0b1001:
-        txt = "D-OTAR GSKO Reject";
         parseDOtarGskoReject(pdu);
-        pos += 4;
         break;
 
     case 0b1010:
-        txt = "D-OTAR KEY DELETE demand";
         parseDOtarKeyDeleteDemand(pdu);
-        pos += 4;
         break;
 
     case 0b1011:
-        txt = "D-OTAR KEY STATUS demand";
         parseDOtarKeyStatusDemand(pdu);
-        pos += 4;
         break;
 
     case 0b1100:
-        txt = "D-OTAR CMG GTSI provide";
         parseDOtarCmgGtsiProvide(pdu);
-        pos += 4;
         break;
 
     case 0b1101:
-        txt = "D-OTAR DM SCK ACTIVATE";
         parseDOtarDmSckActivate(pdu);
-        pos += 4;
         break;
 
-    default:
-        txt = "reserved";
+    default:                                                                    // reserved
         break;
     }
-
-    m_report->add("otar subtype", txt);
-    pos += 4;
-
-    m_report->send();
 }
 
 /**
@@ -135,7 +97,7 @@ void Mm::parseDOtarCckProvide(Pdu pdu)
 
     if (cckProvisionFlag)
     {
-        // cck information length varies, do not parse
+        // TODO parse
     }
 
     m_report->send();
