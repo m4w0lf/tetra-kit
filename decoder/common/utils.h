@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 /**
  * @defgroup tetra_utils Miscellaneous functions
@@ -20,6 +21,7 @@ namespace Tetra {
     std::string vectorToString(const std::vector<uint8_t> data, const int len);
     std::string formatStr(const char * fmt, ...);
     double decodeIntegerTwosComplement(uint32_t data, uint8_t nBits, double mult);
+    bool strEqualsU(const std::string txt1, const std::string txt2);
 
 };
 

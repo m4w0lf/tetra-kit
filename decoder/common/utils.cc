@@ -109,3 +109,19 @@ double Tetra::decodeIntegerTwosComplement(uint32_t data, uint8_t nBits, double m
 
     return res;
 }
+
+/**
+ * @brief Test if two string (converted as uppercase) are identical
+ *
+ */
+
+bool Tetra::strEqualsU(const std::string txt1, const std::string txt2)
+{
+    std::string txt1Uc = txt1;
+    std::string txt2Uc = txt2;
+    
+    std::transform(txt1Uc.begin(), txt1Uc.end(), txt1Uc.begin(), std::ptr_fun<int, int>(std::toupper));
+    std::transform(txt2Uc.begin(), txt2Uc.end(), txt2Uc.begin(), std::ptr_fun<int, int>(std::toupper));
+
+    return (txt1Uc == txt2Uc);
+}

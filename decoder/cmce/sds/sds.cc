@@ -63,7 +63,7 @@ void Sds::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
 /**
  * @brief CMCE D-SDS-DATA 14.7.1.10
  *
- * WARNING: this function generate two reports, the second one
+ * WARNING: this function may generate two reports, the second one
  *          contains dump of user-defined type 4 message
  *
  */
@@ -212,7 +212,6 @@ void Sds::parseDStatus(Pdu pdu)
             pos += 4;
         }
         m_report->add("external suscriber number", extNumber);
-
     }
 
     m_report->send();
