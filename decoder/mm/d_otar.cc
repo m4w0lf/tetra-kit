@@ -163,7 +163,19 @@ void Mm::parseDOtarSckProvide(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    // TODO type 2/3 elements
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -193,7 +205,19 @@ void Mm::parseDOtarSckReject(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    // TODO type 2/3 elements
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -268,7 +292,19 @@ void Mm::parseDOtarGckProvide(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    // TODO type 2/3 elements
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -297,7 +333,19 @@ void Mm::parseDOtarGckReject(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -410,7 +458,19 @@ void Mm::parseDOtarGskoProvide(Pdu pdu)
     m_report->add("gssi", pdu.getValue(pos, 24));
     pos += 24;
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -436,7 +496,19 @@ void Mm::parseDOtarGskoReject(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -489,7 +561,19 @@ void Mm::parseDOtarKeyDeleteDemand(Pdu pdu)
         }
     }
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -545,7 +629,19 @@ void Mm::parseDOtarKeyStatusDemand(Pdu pdu)
         pos += 16;
     }
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -565,7 +661,19 @@ void Mm::parseDOtarCmgGtsiProvide(Pdu pdu)
     m_report->add("gssi", pdu.getValue(pos, 24));
     pos += 24;
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+    }
 
     m_report->send();
 }

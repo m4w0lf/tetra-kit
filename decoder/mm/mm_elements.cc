@@ -174,7 +174,7 @@ uint64_t Mm::parseAuthenticationDownlink(Pdu pdu, uint64_t pos)
 
 uint64_t Mm::parseCckInformation(Pdu pdu, uint64_t pos)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_XXX", pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_cck_information", pdu.toString().c_str());
 
     m_report->add("cck identifier", pdu.getValue(pos, 16));
     pos += 16;
@@ -291,7 +291,7 @@ uint64_t Mm::parseEnergySavingInformation(Pdu pdu, uint64_t pos)
 
 uint64_t Mm::parseGckRejected(Pdu pdu, uint64_t pos)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_XXX", pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_gck_rejected", pdu.toString().c_str());
 
     m_report->add("otar reject reason", pdu.getValue(pos, 3));
     pos += 3;
@@ -502,7 +502,7 @@ uint64_t Mm::parseScchInformationAndDistribution(Pdu pdu, uint64_t pos)
 
 uint64_t Mm::parseSckInformation(Pdu pdu, uint64_t pos)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_XXX", pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_sck_information", pdu.toString().c_str());
 
     // A.8.68 SCK information
 
