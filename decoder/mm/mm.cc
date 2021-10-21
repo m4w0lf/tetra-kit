@@ -63,34 +63,35 @@ void Mm::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime t
         break;
 
     case 0b0101:
-        //parseDLocationUpdateAccept(pdu);
+        parseDLocationUpdateAccept(pdu);
         break;
 
     case 0b0110:
-        //parseDLocationUpdateCommand(pdu);
+        parseDLocationUpdateCommand(pdu);
         break;
 
     case 0b0111:
-        //parseDLocationUpdateReject(pdu);
+        parseDLocationUpdateReject(pdu);
         break;
 
     case 0b1001:
-        //parseDLocationUpdateProceeding(pdu);
+        parseDLocationUpdateProceeding(pdu);
         break;
 
     case 0b1010:
-        //parseDAttachDetachGroupIdentity(pdu);
+        parseDAttachDetachGroupIdentity(pdu);
         break;
 
     case 0b1011:
-        //parseDAttachDetachGroupIdentityAck(pdu);
+        parseDAttachDetachGroupIdentityAck(pdu);
         break;
 
     case 0b1100:
-        //parseDMmStatus(pdu);
+        parseDMmStatus(pdu);
         break;
 
-    case 0b1111:                                                                // MM PDU/FUNCTION NOT SUPPORTED
+    case 0b1111:
+        parseMmPduNotSupported(pdu);
         break;
 
     default:                                                                    // reserved
@@ -242,8 +243,7 @@ void Mm::parseDDisable(Pdu pdu)
 
     if (subscriptionDisable)
     {
-        m_report->add("address extension", pdu.getValue(pos, 24));
-        pos += 24;
+        pos = parseAddressExtension(pdu, pos);
         m_report->add("ssi", pdu.getValue(pos, 24));
         pos += 24;
     }
@@ -286,8 +286,7 @@ void Mm::parseDEnable(Pdu pdu)
 
     if (subscriptionEnable)
     {
-        m_report->add("address extension", pdu.getValue(pos, 24));
-        pos += 24;
+        pos = parseAddressExtension(pdu, pos);
         m_report->add("ssi", pdu.getValue(pos, 24));
         pos += 24;
     }
@@ -299,45 +298,267 @@ void Mm::parseDEnable(Pdu pdu)
 }
 
 /**
- * @brief MM
+ * @brief MM D-LOCATION UPDATE ACCEPT - 16.9.2.7
  *
  */
 
-void Mm::parseXXX(Pdu pdu)
+void Mm::parseDLocationUpdateAccept(Pdu pdu)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_XXX", pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_location_update_accept", pdu.toString().c_str());
 
-    m_report->start("MM", "XXX", m_tetraTime, m_macAddress);
+    m_report->start("MM", "D-LOCATION UPDATE ACCEPT", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    std::string txt = valueToString("location update accept type", pdu.getValue(pos, 3));
+    m_report->add("location update accept type", pdu.getValue(pos, 3));
+    m_report->add("location update accept type val", txt);
+    pos += 3;
+
+    // type 2 elements (Table E.11)
+
+    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    pos += 1;
+    if (oBit)                                                                   // there are type 2/3/4 elements
+    {
+        // each type 2 element has a p-bit
+
+        uint8_t pBit = pdu.getValue(pos, 1);                                    // p-bit for ssi element
+        pos += 1;
+        if (pBit)
+        {
+            m_report->add("ssi", pdu.getValue(pos, 24));
+            pos += 24;
+        }
+
+        pBit = pdu.getValue(pos, 1);                                            // p-bit for address extension
+        pos += 1;
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+
+        pBit = pdu.getValue(pos, 1);                                            // p-bit for subscriber class
+        pos += 1;
+        if (pBit)
+        {
+            m_report->add("subscriber class", pdu.getValue(pos, 16));
+            pos += 16;
+        }
+
+        pBit = pdu.getValue(pos, 1);                                            // p-bit for energy saving information
+        pos += 1;
+        if (pBit)
+        {
+            pos = parseEnergySavingInformation(pdu, pos);
+        }
+
+        pBit = pdu.getValue(pos, 1);                                            // p-bit for scch information and distribution
+        pos += 1;
+        if (pBit)
+        {
+            pos = parseScchInformationAndDistribution(pdu, pos);
+        }
+
+        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
 
-std::string Mm::valueToString(std::string key, uint32_t val)
-{
-    std::string valueAsString = "";
+/**
+ * @brief MM D-LOCATION UPDATE COMMAND - 16.9.2.8
+ *
+ */
 
-    if (strEqualsU(key, "location update accept type"))
+void Mm::parseDLocationUpdateCommand(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_location_update_command", pdu.toString().c_str());
+
+    m_report->start("MM", "D-LOCATION UPDATE COMMAND", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    m_report->add("group identity report", pdu.getValue(pos, 1));
+    pos += 1;
+
+    uint8_t cipherControl = pdu.getValue(pos, 1);
+    m_report->add("cipher control", pdu.getValue(pos, 1));
+    pos += 1;
+
+    if (cipherControl)
     {
-        switch (val)
-        {
-        case 0b000:
-            valueAsString = "Roaming location updating";
-            break;
-        case 0b001:
-            valueAsString = "Temporary registration";
-            break;
-        }
+        pos = parseCipheringParameters(pdu, pos);
     }
-    if (strEqualsU(key, "energy saving mode"))
-    {
-        switch (val)
-        {
-        case 0b000:
-            valueAsString = "Stay Alive";
-            break;
-        }
-    }
-    return valueAsString;
+
+    pos = parseAddressExtension(pdu, pos);
+
+    m_report->send();
 }
 
+/**
+ * @brief MM D-LOCATION UPDATE REJECT - 16.9.2.9
+ *
+ */
+
+void Mm::parseDLocationUpdateReject(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_location_update_reject", pdu.toString().c_str());
+
+    m_report->start("MM", "D-LOCATION UPDATE REJECT", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    std::string txt = valueToString("location update type", pdu.getValue(pos, 3));
+    m_report->add("location update type", pdu.getValue(pos, 3));
+    m_report->add("location update type val", txt);
+    pos += 3;
+
+    std::string rejectCauseTxt = valueToString("reject cause", pdu.getValue(pos, 5));
+    m_report->add("reject cause", pdu.getValue(pos, 5));
+    m_report->add("reject cause val", rejectCauseTxt);
+    pos += 5;
+
+    uint8_t cipherControl = pdu.getValue(pos, 1);
+    m_report->add("cipher control", pdu.getValue(pos, 1));
+    pos += 1;
+
+    if (cipherControl)
+    {
+        pos = parseCipheringParameters(pdu, pos);
+    }
+
+    pos = parseAddressExtension(pdu, pos);
+
+    m_report->send();
+}
+
+
+/**
+ * @brief MM D-LOCATION UPDATE PROCEEDING - 16.9.2.10
+ *
+ */
+
+void Mm::parseDLocationUpdateProceeding(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_location_update_proceeding", pdu.toString().c_str());
+
+    m_report->start("MM", "D-LOCATION UPDATE PROCEEDING", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    m_report->add("ssi", pdu.getValue(pos, 24));
+    pos += 24;
+
+    pos = parseAddressExtension(pdu, pos);
+
+    m_report->send();
+}
+
+
+/**
+ * @brief MM D-ATTACH/DETACH GROUP IDENTITY - 16.9.2.1
+ *
+ */
+
+void Mm::parseDAttachDetachGroupIdentity(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_attach_detach_group_identity", pdu.toString().c_str());
+
+    m_report->start("MM", "D-ATTACH/DETACH GROUP IDENTITY", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    m_report->add("group identity report", pdu.getValue(pos, 1));
+    pos += 1;
+
+    m_report->add("group identity acknowledgement request", pdu.getValue(pos, 1));
+    pos += 1;
+
+    m_report->add("group identity attach/detach mode", pdu.getValue(pos, 1));
+    pos += 1;
+
+    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    pos += 1;
+
+    if (oBit)                                                                   // there are type 2/3/4 elements
+    {
+        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+
+        if (mBit)
+        {
+            parseType34Elements(pdu, pos);
+        }
+    }
+
+    m_report->send();
+}
+
+/**
+ * @brief MM D-ATTACH/DETACH GROUP IDENTITY ACKNOWLEDGEMENT - 16.9.2.2
+ *
+ */
+
+void Mm::parseDAttachDetachGroupIdentityAck(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_d_attach_detach_group_identity_ack", pdu.toString().c_str());
+
+    m_report->start("MM", "D-ATTACH/DETACH GROUP IDENTITY ACKNOWLEDGEMENT", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;                                                           // pdu type
+
+    m_report->add("group identity accept/reject", pdu.getValue(pos, 1));
+    pos += 1;
+
+    m_report->add("reserved", pdu.getValue(pos, 1));
+    pos += 1;
+
+    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    pos += 1;
+
+    if (oBit)                                                                   // there are type 2/3/4 elements
+    {
+        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+
+        if (mBit)
+        {
+            parseType34Elements(pdu, pos);
+        }
+    }
+
+    m_report->send();
+}
+
+/**
+ * @brief MM PDU/FUNCTION NOT SUPPORTED - 16.9.4.1
+ *
+ */
+
+void Mm::parseMmPduNotSupported(Pdu pdu)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_mm_pdu_function_not_supported", pdu.toString().c_str());
+
+    m_report->start("MM", "MM PDU/FUNCTION NOT SUPPORTED", m_tetraTime, m_macAddress);
+
+    uint32_t pos = 4;
+
+    m_report->add("not-supported pdu type", pdu.getValue(pos, 4));
+    pos += 4;
+
+    // variable data
+    /*
+    m_report->add("not-supported sub pdu type", pdu.getValue(pos, 4));
+    pos += 4;
+
+    m_report->add("length of the copied pdu", pdu.getValue(pos, 8));
+    pos += 8;
+    */
+
+    m_report->send();
+}
 

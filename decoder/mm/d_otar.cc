@@ -97,7 +97,7 @@ void Mm::parseDOtarCckProvide(Pdu pdu)
 
     if (cckProvisionFlag)
     {
-        // TODO parse
+        pos = parseCckInformation(pdu, pos);
     }
 
     m_report->send();
@@ -289,14 +289,15 @@ void Mm::parseDOtarGckReject(Pdu pdu)
     m_report->add("number of gcks rejected", pdu.getValue(pos, 3));
     pos += 3;
 
-    // gck reject length varies, so do not parse
-    /*
     for (uint8_t cnt = 1; cnt <= numberOfGcksRejected; cnt++)
     {
-        m_report->add("gck rejected", pdu.getValue(pos, 8));
-        pos += 8;
+        pos = parseGckRejected(pdu, pos);
     }
-    */
+
+    m_report->add("otar retry interval", pdu.getValue(pos, 3));
+    pos += 3;
+
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -380,7 +381,7 @@ void Mm::parseDOtarNewcell(Pdu pdu)
     m_report->add("cck provision flag", pdu.getValue(pos, 1));
     pos += 1;
 
-    // variable length, do not parse
+    pos = parseCckInformation(pdu, pos);
 
     m_report->send();
 }
@@ -409,7 +410,7 @@ void Mm::parseDOtarGskoProvide(Pdu pdu)
     m_report->add("gssi", pdu.getValue(pos, 24));
     pos += 24;
 
-    // TODO type 2/3 elements
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -435,7 +436,7 @@ void Mm::parseDOtarGskoReject(Pdu pdu)
     m_report->add("otar retry interval", pdu.getValue(pos, 3));
     pos += 3;
 
-    // TODO type 2/3 elements
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -488,7 +489,7 @@ void Mm::parseDOtarKeyDeleteDemand(Pdu pdu)
         }
     }
 
-    // TODO type 2 element
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -544,7 +545,7 @@ void Mm::parseDOtarKeyStatusDemand(Pdu pdu)
         pos += 16;
     }
 
-    // TODO type 2 element
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -564,7 +565,7 @@ void Mm::parseDOtarCmgGtsiProvide(Pdu pdu)
     m_report->add("gssi", pdu.getValue(pos, 24));
     pos += 24;
 
-    // TODO type 2 element
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }
@@ -601,8 +602,12 @@ void Mm::parseDOtarDmSckActivate(Pdu pdu)
     {
         for (uint8_t cnt = 1; cnt <= numberOfScksChanged; cnt++)
         {
-            m_report->add("sck data", pdu.getValue(pos, 21));
-            pos += 21;
+            // A.8.67 SCK data
+
+            m_report->add("sck number", pdu.getValue(pos, 5));
+            pos += 5;
+            m_report->add("sck version number", pdu.getValue(pos, 16));
+            pos += 16;
         }
     }
 
@@ -627,8 +632,7 @@ void Mm::parseDOtarDmSckActivate(Pdu pdu)
         pos += 48;
     }
 
-    m_report->add("address extension", pdu.getValue(pos, 24));
-    pos += 24;
+    pos = parseAddressExtension(pdu, pos);
 
     m_report->send();
 }

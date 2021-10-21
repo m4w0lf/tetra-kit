@@ -41,13 +41,36 @@ namespace Tetra {
         void parseDDisable(Pdu pdu);
         void parseDEnable(Pdu pdu);
         void parseDLocationUpdateAccept(Pdu pdu);
-        void parseType34Elements(Pdu pdu, uint64_t pos);
         void parseDLocationUpdateCommand(Pdu pdu);
         void parseDLocationUpdateReject(Pdu pdu);
         void parseDLocationUpdateProceeding(Pdu pdu);
         void parseDAttachDetachGroupIdentity(Pdu pdu);
         void parseDAttachDetachGroupIdentityAck(Pdu pdu);
         void parseDMmStatus(Pdu pdu);
+        void parseDChangeOfEnergySavingModeRequest(Pdu pdu);
+        void parseDChangeOfEnergySavingModeResponse(Pdu pdu);
+        void parseDDualWatchModeResponse(Pdu pdu);
+        void parseDTerminatingDualWatchModeResponse(Pdu pdu);
+        void parseDChangeOfDualWatchModeRequest(Pdu pdu);
+        void parseDMsFrequencyBandsRequest(Pdu pdu);
+        void parseDDistanceReportingRequest(Pdu pdu);
+        void parseMmPduNotSupported(Pdu pdu);
+
+        uint64_t parseType34Elements(Pdu pdu, uint64_t pos);
+        uint64_t parseAddressExtension(Pdu pdu, uint64_t pos);
+        uint64_t parseAuthenticationDownlink(Pdu pdu, uint64_t pos);
+        uint64_t parseCckInformation(Pdu pdu, uint64_t pos);
+        uint64_t parseCipheringParameters(Pdu pdu, uint64_t pos);
+        uint64_t parseCkProvisioningInformation(Pdu pdu, uint64_t pos);
+        uint64_t parseEnergySavingInformation(Pdu pdu, uint64_t pos);
+        uint64_t parseGckRejected(Pdu pdu, uint64_t pos);
+        uint64_t parseGroupIdentityDownlink(Pdu pdu, uint64_t pos);
+        uint64_t parseGroupIdentityLocationAccept(Pdu pdu, uint64_t pos);
+        uint64_t parseGISRI(Pdu pdu, uint64_t pos);
+        uint64_t parseGroupReportResponse(Pdu pdu, uint64_t pos);
+        uint64_t parseNewRegisteredArea(Pdu pdu, uint64_t pos);
+        uint64_t parseScchInformationAndDistribution(Pdu pdu, uint64_t pos);
+        uint64_t parseSckInformation(Pdu pdu, uint64_t pos);
         std::string valueToString(std::string key, uint32_t val);
     };
 
