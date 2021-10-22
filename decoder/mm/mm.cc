@@ -227,7 +227,7 @@ void Mm::parseDDisable(Pdu pdu)
     m_report->add("disabling type", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t equipmentDisable = pdu.getValue(pos, 1);
+    bool equipmentDisable = pdu.getValue(pos, 1);
     m_report->add("equipment disable", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -237,7 +237,7 @@ void Mm::parseDDisable(Pdu pdu)
         pos += 60;
     }
 
-    uint8_t subscriptionDisable = pdu.getValue(pos, 1);
+    bool subscriptionDisable = pdu.getValue(pos, 1);
     m_report->add("subscription disable", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -270,7 +270,7 @@ void Mm::parseDEnable(Pdu pdu)
     m_report->add("intent/confirm", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t equipmentEnable = pdu.getValue(pos, 1);
+    bool equipmentEnable = pdu.getValue(pos, 1);
     m_report->add("equipment enable", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -280,7 +280,7 @@ void Mm::parseDEnable(Pdu pdu)
         pos += 60;
     }
 
-    uint8_t subscriptionEnable = pdu.getValue(pos, 1);
+    bool subscriptionEnable = pdu.getValue(pos, 1);
     m_report->add("subscription enable", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -317,13 +317,13 @@ void Mm::parseDLocationUpdateAccept(Pdu pdu)
 
     // type 2 elements (Table E.11)
 
-    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    bool oBit = pdu.getValue(pos, 1);                                           // o-bit
     pos += 1;
     if (oBit)                                                                   // there are type 2/3/4 elements
     {
         // each type 2 element has a p-bit
 
-        uint8_t pBit = pdu.getValue(pos, 1);                                    // p-bit for ssi element
+        bool pBit = pdu.getValue(pos, 1);                                       // p-bit for ssi element
         pos += 1;
         if (pBit)
         {
@@ -360,7 +360,7 @@ void Mm::parseDLocationUpdateAccept(Pdu pdu)
             pos = parseScchInformationAndDistribution(pdu, pos);
         }
 
-        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+        bool mBit = pdu.getValue(pos, 1);                                       // type 3/4 elements
 
         if (mBit)
         {
@@ -387,7 +387,7 @@ void Mm::parseDLocationUpdateCommand(Pdu pdu)
     m_report->add("group identity report", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t cipherControl = pdu.getValue(pos, 1);
+    bool cipherControl = pdu.getValue(pos, 1);
     m_report->add("cipher control", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -424,7 +424,7 @@ void Mm::parseDLocationUpdateReject(Pdu pdu)
     m_report->add("reject cause val", rejectCauseTxt);
     pos += 5;
 
-    uint8_t cipherControl = pdu.getValue(pos, 1);
+    bool cipherControl = pdu.getValue(pos, 1);
     m_report->add("cipher control", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -483,12 +483,12 @@ void Mm::parseDAttachDetachGroupIdentity(Pdu pdu)
     m_report->add("group identity attach/detach mode", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    bool oBit = pdu.getValue(pos, 1);                                           // o-bit
     pos += 1;
 
     if (oBit)                                                                   // there are type 2/3/4 elements
     {
-        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+        bool mBit = pdu.getValue(pos, 1);                                       // type 3/4 elements
 
         if (mBit)
         {
@@ -515,15 +515,15 @@ void Mm::parseDAttachDetachGroupIdentityAck(Pdu pdu)
     m_report->add("group identity accept/reject", pdu.getValue(pos, 1));
     pos += 1;
 
-    m_report->add("reserved", pdu.getValue(pos, 1));
+    // reserved
     pos += 1;
 
-    uint8_t oBit = pdu.getValue(pos, 1);                                        // o-bit
+    bool oBit = pdu.getValue(pos, 1);                                           // o-bit
     pos += 1;
 
     if (oBit)                                                                   // there are type 2/3/4 elements
     {
-        uint8_t mBit = pdu.getValue(pos, 1);                                    // type 3/4 elements
+        bool mBit = pdu.getValue(pos, 1);                                       // type 3/4 elements
 
         if (mBit)
         {
@@ -547,7 +547,9 @@ void Mm::parseMmPduNotSupported(Pdu pdu)
 
     uint32_t pos = 4;
 
+    std::string txt = valueToString("pdu type", pdu.getValue(pos, 4));
     m_report->add("not-supported pdu type", pdu.getValue(pos, 4));
+    m_report->add("not-supported pdu type", txt);
     pos += 4;
 
     // variable data

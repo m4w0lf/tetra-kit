@@ -106,21 +106,28 @@ void Mm::parseDDualWatchModeResponse(Pdu pdu)
     m_report->add("result of dual watch request", pdu.getValue(pos, 3));
     pos += 3;
 
-    m_report->add("reserved", pdu.getValue(pos, 8));
+    // reserved
     pos += 8;
 
     // type 2
-    uint8_t oBit = pdu.getValue(pos, 1);
+    bool oBit = pdu.getValue(pos, 1);
     pos += 1;
 
     if (oBit)
     {
-        uint8_t pBit = pdu.getValue(pos, 1);
+        bool pBit = pdu.getValue(pos, 1);
         pos +=1 ;
 
         if (pBit)
         {
             pos = parseScchInformationAndDistribution(pdu, pos);
+        }
+
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
         }
     }
 
@@ -143,16 +150,16 @@ void Mm::parseDTerminatingDualWatchModeResponse(Pdu pdu)
     m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
-    m_report->add("reserved", pdu.getValue(pos, 8));
+    // reserved
     pos += 8;
 
     // type 2
-    uint8_t oBit = pdu.getValue(pos, 1);
+    bool oBit = pdu.getValue(pos, 1);
     pos += 1;
 
     if (oBit)
     {
-        uint8_t pBit = pdu.getValue(pos, 1);
+        bool pBit = pdu.getValue(pos, 1);
         pos += 1;
 
         if (pBit)
@@ -166,6 +173,13 @@ void Mm::parseDTerminatingDualWatchModeResponse(Pdu pdu)
         if (pBit)
         {
             pos = parseScchInformationAndDistribution(pdu, pos);
+        }
+
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
         }
     }
 
@@ -194,21 +208,28 @@ void Mm::parseDChangeOfDualWatchModeRequest(Pdu pdu)
     m_report->add("reason for dual watch change by swmi", pdu.getValue(pos, 3));
     pos += 3;
 
-    m_report->add("reserved", pdu.getValue(pos, 8));
+    // reserved
     pos += 8;
 
     // type 2
-    uint8_t oBit = pdu.getValue(pos, 1);
+    bool oBit = pdu.getValue(pos, 1);
     pos += 1;
 
     if (oBit)
     {
-        uint8_t pBit = pdu.getValue(pos, 1);
+        bool pBit = pdu.getValue(pos, 1);
         pos +=1 ;
 
         if (pBit)
         {
             pos = parseScchInformationAndDistribution(pdu, pos);
+        }
+
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
         }
     }
 
@@ -232,7 +253,18 @@ void Mm::parseDMsFrequencyBandsRequest(Pdu pdu)
     m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
-    // proprietary
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
+        }
+    }
 
     m_report->send();
 }

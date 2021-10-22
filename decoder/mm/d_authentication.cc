@@ -82,7 +82,6 @@ void Mm::parseDAuthenticationResponse(Pdu pdu)
     pos += 32;
 
     uint8_t authFlag = pdu.getValue(pos, 1);
-    m_report->add("mutual authentication flag", pdu.getValue(pos, 1));
     pos += 1;
 
     if (authFlag)
@@ -111,7 +110,6 @@ void Mm::parseDAuthenticationResult(Pdu pdu)
     pos += 1;
 
     uint8_t authFlag = pdu.getValue(pos, 1);
-    m_report->add("mutual authentication flag", pdu.getValue(pos, 1));
     pos += 1;
 
     if (authFlag)

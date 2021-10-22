@@ -28,6 +28,7 @@ uint64_t Mm::parseType34Elements(Pdu pdu, uint64_t pos)
             elementType = 4;                                                    // According to Table 16.11
             break;
         case 0b0011:                                                            // Group identity location demand
+                                                                                // Not used by downlink PDUs
             break;
         case 0b0100:                                                            // Group report response
             elementType = 3;                                                    // According to Table 16.1
@@ -36,6 +37,7 @@ uint64_t Mm::parseType34Elements(Pdu pdu, uint64_t pos)
             elementType = 3;                                                    // According to Table 16.11
             break;
         case 0b0110:                                                            // DM-MS address
+                                                                                // Used only in DMO
             break;
         case 0b0111:                                                            // Group identity downlink
             elementType = 4;                                                    // According to Table 16.1
@@ -48,6 +50,7 @@ uint64_t Mm::parseType34Elements(Pdu pdu, uint64_t pos)
             elementType = 3;                                                    // According to Table 16.11
             break;
         case 0b1011:                                                            // Extended capabilities
+                                                                                // not used by downlink PDUs
             break;
         case 0b1100:                                                            // Group Identity Security Related Information
             elementType = 4;                                                    // According to Table 16.11
@@ -110,14 +113,9 @@ uint64_t Mm::parseType34Elements(Pdu pdu, uint64_t pos)
             case 0b1010:
                 pos = parseAuthenticationDownlink(pdu, pos);
                 break;
-            }
-
-            uint8_t oBit = pdu.getValue(pos, 1);                                // o-bit
-            pos += 1;
-
-            if (oBit == 0)
-            {
-                break;                                                          // m-bit won't be present
+            case 0b1111:
+                pos = parseProprietary(pdu, pos);
+                break;
             }
         }
     }
@@ -156,8 +154,7 @@ uint64_t Mm::parseAuthenticationDownlink(Pdu pdu, uint64_t pos)
     m_report->add("tei request flag", pdu.getValue(pos, 1));
     pos += 1;
 
-    uint8_t ckProvisionFlag = pdu.getValue(pos, 1);
-    m_report->add("ck provision flag", pdu.getValue(pos, 1));
+    bool ckProvisionFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (ckProvisionFlag)
@@ -185,8 +182,7 @@ uint64_t Mm::parseCckInformation(Pdu pdu, uint64_t pos)
     m_report->add("cck location area information", pdu.getValue(pos, 2));
     pos += 2;
 
-    uint8_t futureKeyFlag = pdu.getValue(pos, 1);
-    m_report->add("future key flag", pdu.getValue(pos, 1));
+    bool futureKeyFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (futureKeyFlag)
@@ -209,7 +205,7 @@ uint64_t Mm::parseCipheringParameters(Pdu pdu, uint64_t pos)
     m_report->add("ksg number", pdu.getValue(pos, 4));
     pos += 4;
 
-    uint8_t securityClass = pdu.getValue(pos, 1);
+    bool securityClass = pdu.getValue(pos, 1);
     m_report->add("security class", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -242,8 +238,7 @@ uint64_t Mm::parseCkProvisioningInformation(Pdu pdu, uint64_t pos)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_ck_provisioning_information", pdu.toString().c_str());
 
-    uint8_t sckProvisionFlag = pdu.getValue(pos, 1);
-    m_report->add("sck provision flag", pdu.getValue(pos, 1));
+    bool sckProvisionFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (sckProvisionFlag)
@@ -251,8 +246,7 @@ uint64_t Mm::parseCkProvisioningInformation(Pdu pdu, uint64_t pos)
         pos = parseSckInformation(pdu, pos);
     }
 
-    uint8_t cckProvisionFlag = pdu.getValue(pos, 1);
-    m_report->add("cck provision flag", pdu.getValue(pos, 1));
+    bool cckProvisionFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (cckProvisionFlag)
@@ -300,7 +294,7 @@ uint64_t Mm::parseGckRejected(Pdu pdu, uint64_t pos)
     m_report->add("group association", pdu.getValue(pos, 1));
     pos += 1;
 
-    if (groupAssociation)                                                   // Associated with specific GSSI
+    if (groupAssociation)                                                       // Associated with specific GSSI
     {
         m_report->add("gssi", pdu.getValue(pos, 24));
         pos += 24;
@@ -323,16 +317,16 @@ uint64_t Mm::parseGroupIdentityDownlink(Pdu pdu, uint64_t pos)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_group_identity_downlink", pdu.toString().c_str());
 
-    uint8_t attachDetachType = pdu.getValue(pos, 1);
+    bool attachDetachType = pdu.getValue(pos, 1);
     m_report->add("group identity attach/detach type identifier", pdu.getValue(pos, 1));
     pos += 1;
 
-    if (attachDetachType)                                       // detachment
+    if (attachDetachType)                                                       // detachment
     {
         m_report->add("group identity detachment downlink", pdu.getValue(pos, 2));
         pos += 2;
     }
-    else                                                        // attachment
+    else                                                                        // attachment
     {
         m_report->add("group identity attachment lifetime", pdu.getValue(pos, 2));
         pos += 2;
@@ -344,23 +338,23 @@ uint64_t Mm::parseGroupIdentityDownlink(Pdu pdu, uint64_t pos)
     m_report->add("group identity address type", pdu.getValue(pos, 2));
     pos += 2;
 
-    if (groupIdentityAddressType == 0)                          // GSSI
+    if (groupIdentityAddressType == 0)                                          // GSSI
     {
         m_report->add("gssi", pdu.getValue(pos, 24));
         pos += 24;
     }
-    if (groupIdentityAddressType == 1)                          // GTSI
+    if (groupIdentityAddressType == 1)                                          // GTSI
     {
         m_report->add("gssi", pdu.getValue(pos, 24));
         pos += 24;
         pos = parseAddressExtension(pdu, pos);
     }
-    if (groupIdentityAddressType == 2)                          // (V)GSSI
+    if (groupIdentityAddressType == 2)                                          // (V)GSSI
     {
         m_report->add("(v)gssi", pdu.getValue(pos, 24));
         pos += 24;
     }
-    if (groupIdentityAddressType == 3)                          // GTSI+(V)GSSI
+    if (groupIdentityAddressType == 3)                                          // GTSI+(V)GSSI
     {
         m_report->add("gssi", pdu.getValue(pos, 24));
         pos += 24;
@@ -383,10 +377,10 @@ uint64_t Mm::parseGroupIdentityLocationAccept(Pdu pdu, uint64_t pos)
     m_report->add("group identity accept/reject", pdu.getValue(pos, 1));
     pos += 1;
 
-    m_report->add("reserved", pdu.getValue(pos, 1));
+    // reserved
     pos += 1;
 
-    uint8_t oBit = pdu.getValue(pos, 1);
+    bool oBit = pdu.getValue(pos, 1);
     pos += 1;
 
     // Group Identity Downlink is type 4 element
@@ -417,8 +411,7 @@ uint64_t Mm::parseGISRI(Pdu pdu, uint64_t pos)
         pos += 24;
     }
 
-    uint8_t gckAssociation = pdu.getValue(pos, 1);
-    m_report->add("gck association", pdu.getValue(pos, 1));
+    bool gckAssociation = pdu.getValue(pos, 1);
     pos += 1;
 
     if (gckAssociation)                                         // GCK association information provided
@@ -427,8 +420,7 @@ uint64_t Mm::parseGISRI(Pdu pdu, uint64_t pos)
         pos += 17;
     }
 
-    uint8_t sckAssociation = pdu.getValue(pos, 1);
-    m_report->add("sck association", pdu.getValue(pos, 1));
+    bool sckAssociation = pdu.getValue(pos, 1);
     pos += 1;
 
     if (sckAssociation)                                         // SCK association information provided
@@ -474,6 +466,49 @@ uint64_t Mm::parseNewRegisteredArea(Pdu pdu, uint64_t pos)
     m_report->add("LA", pdu.getValue(pos, 14));
     pos += 14;
 
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            m_report->add("LACC", pdu.getValue(pos, 10));
+            pos += 10;
+            m_report->add("LANC", pdu.getValue(pos, 14));
+            pos += 14;
+        }
+    }
+
+    return pos;
+}
+
+
+/**
+ * @brief MM New registered area - 16.10.40
+ *
+ */
+
+uint64_t Mm::parseProprietary(Pdu pdu, uint64_t pos)
+{
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_new_registered_area", pdu.toString().c_str());
+
+    uint32_t proprietaryElementOwner = pdu.getValue(pos, 8);
+    m_report->add("proprietary element owner", pdu.getValue(pos, 8));
+    pos += 8;
+
+    if (proprietaryElementOwner == 0)
+    {
+        // proprietary element, cannot be parsed
+        /*
+        m_report->add("proprietary element owner extension", pdu.getValue(pos, 1));
+        pos += 1;
+        */
+    }
+
     return pos;
 }
 
@@ -504,9 +539,7 @@ uint64_t Mm::parseSckInformation(Pdu pdu, uint64_t pos)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_sck_information", pdu.toString().c_str());
 
-    // A.8.68 SCK information
-
-    uint8_t sessionKey = pdu.getValue(pos, 1);
+    bool sessionKey = pdu.getValue(pos, 1);
     m_report->add("session key", pdu.getValue(pos, 1));
     pos += 1;
 
@@ -528,8 +561,7 @@ uint64_t Mm::parseSckInformation(Pdu pdu, uint64_t pos)
     m_report->add("sealed sck", pdu.getValue(pos, 120));
     pos += 120;
 
-    uint8_t futureKeyFlag = pdu.getValue(pos, 1);
-    m_report->add("future key flag", pdu.getValue(pos, 1));
+    bool futureKeyFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (futureKeyFlag)
@@ -544,270 +576,167 @@ uint64_t Mm::parseSckInformation(Pdu pdu, uint64_t pos)
     return pos;
 }
 
-void Mm::parseXXX(Pdu pdu)
+std::string Mm::getMapValue(std::map<uint32_t, std::string> informationElement, uint32_t val)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mm_parse_XXX", pdu.toString().c_str());
-
-    m_report->start("MM", "XXX", m_tetraTime, m_macAddress);
-
-    m_report->send();
+    auto search = informationElement.find(val);
+    if (search != informationElement.end())
+    {
+        return search->second;
+    }
+    else
+    {
+        return "reserved";
+    }
 }
 
 std::string Mm::valueToString(std::string key, uint32_t val)
 {
-    std::string valueAsString = "";
-
-    if (strEqualsU(key, "location update accept type"))
-    {
-        // 16.10.35a
-
-        switch (val)
-        {
-        case 0b000:
-            valueAsString = "Roaming location updating";
-            break;
-        case 0b001:
-            valueAsString = "Temporary registration";
-            break;
-        case 0b010:
-            valueAsString = "Periodic location updating";
-            break;
-        case 0b011:
-            valueAsString = "ITSI attach";
-            break;
-        case 0b100:
-            valueAsString = "Call restoration roaming location updating";
-            break;
-        case 0b101:
-            valueAsString = "Migrating or call restoration migrating location updating";
-            break;
-        case 0b110:
-            valueAsString = "Demand location updating";
-            break;
-        case 0b111:
-            valueAsString = "Disabled MS updating";
-            break;
-        }
-    }
-    if (strEqualsU(key, "location update type"))
-    {
-        // 16.10.35
-
-        switch (val)
-        {
-        case 0b000:
-            valueAsString = "Roaming location updating";
-            break;
-        case 0b001:
-            valueAsString = "Migrating location updating";
-            break;
-        case 0b010:
-            valueAsString = "Periodic location updating";
-            break;
-        case 0b011:
-            valueAsString = "ITSI attach";
-            break;
-        case 0b100:
-            valueAsString = "Call restoration roaming location updating";
-            break;
-        case 0b101:
-            valueAsString = "Call restoration migrating location updating";
-            break;
-        case 0b110:
-            valueAsString = "Demand location updating";
-            break;
-        case 0b111:
-            valueAsString = "Disabled MS updating";
-            break;
-
-        default:
-            valueAsString = "unknown";
-            break;
-        }
-    }
     if (strEqualsU(key, "energy saving mode"))
     {
         // 16.10.9 Table 16.38
 
-        switch (val)
+        std::map<uint32_t, std::string> energySavingMode
         {
-        case 0b000:
-            valueAsString = "Stay Alive";
-            break;
-        case 0b001:
-            valueAsString = "Economy mode 1 (EG1)";
-            break;
-        case 0b010:
-            valueAsString = "Economy mode 2 (EG2)";
-            break;
-        case 0b011:
-            valueAsString = "Economy mode 3 (EG3)";
-            break;
-        case 0b100:
-            valueAsString = "Economy mode 4 (EG4)";
-            break;
-        case 0b101:
-            valueAsString = "Economy mode 5 (EG5)";
-            break;
-        case 0b110:
-            valueAsString = "Economy mode 6 (EG6)";
-            break;
-        case 0b111:
-            valueAsString = "Economy mode 7 (EG7)";
-            break;
-        }
+            {0b000, "Stay Alive"},
+            {0b001, "Economy mode 1 (EG1)"},
+            {0b010, "Economy mode 2 (EG2)"},
+            {0b011, "Economy mode 3 (EG3)"},
+            {0b100, "Economy mode 4 (EG4)"},
+            {0b101, "Economy mode 5 (EG5)"},
+            {0b110, "Economy mode 6 (EG6)"},
+            {0b111, "Economy mode 7 (EG7)"}
+        };
+
+        return getMapValue(energySavingMode, val);
     }
     if (strEqualsU(key, "LA timer"))
     {
         // 16.10.33 Table 16.63
 
-        switch (val)
+        std::map<uint32_t, std::string> laTimer
         {
-        case 0b000:
-            valueAsString = "10 min";
-            break;
-        case 0b001:
-            valueAsString = "30 min";
-            break;
-        case 0b010:
-            valueAsString = "1 hour";
-            break;
-        case 0b011:
-            valueAsString = "2 hours";
-            break;
-        case 0b100:
-            valueAsString = "4 hours";
-            break;
-        case 0b101:
-            valueAsString = "8 hours";
-            break;
-        case 0b110:
-            valueAsString = "24 hours";
-            break;
-        case 0b111:
-            valueAsString = "no timing";
-        break;
-        }
+            {0b000, "10 min"},
+            {0b001, "30 min"},
+            {0b010, "1 hour"},
+            {0b011, "2 hours"},
+            {0b100, "4 hours"},
+            {0b101, "8 hours"},
+            {0b110, "24 hours"},
+            {0b111, "no timing"}
+        };
+
+        return getMapValue(laTimer, val);
+    }
+    if (strEqualsU(key, "location update accept type"))
+    {
+        // 16.10.35a
+
+        std::map<uint32_t, std::string> locationUpdateAcceptType
+        {
+            {0b000, "Roaming location updating"},
+            {0b001, "Temporary registration"},
+            {0b010, "Periodic location updating"},
+            {0b011, "ITSI attach"},
+            {0b100, "Call restoration roaming location updating"},
+            {0b101, "Migrating or call restoration migrating location updating"},
+            {0b110, "Demand location updating"},
+            {0b111, "Disabled MS updating"}
+        };
+
+        return getMapValue(locationUpdateAcceptType, val);
+    }
+    if (strEqualsU(key, "location update type"))
+    {
+        // 16.10.35
+
+        std::map<uint32_t, std::string> locationUpdateType
+        {
+            {0b000, "Roaming location updating"},
+            {0b001, "Migrating location updating"},
+            {0b010, "Periodic location updating"},
+            {0b011, "ITSI attach"},
+            {0b100, "Call restoration roaming location updating"},
+            {0b101, "Call restoration migrating location updating"},
+            {0b110, "Demand location updating"},
+            {0b111, "Disabled MS updating"}
+        };
+
+        return getMapValue(locationUpdateType, val);
+    }
+    if (strEqualsU(key, "pdu type"))
+    {
+        // 16.10.39
+
+        std::map<uint32_t, std::string> pduType
+        {
+            {0b0000, "D-OTAR"},
+            {0b0001, "D-AUTHENTICATION"},
+            {0b0010, "D-CK CHANGE DEMAND"},
+            {0b0011, "D-DISABLE"},
+            {0b0100, "D-ENABLE"},
+            {0b0101, "D-LOCATION UPDATE ACCEPT"},
+            {0b0110, "D-LOCATION UPDATE COMMAND"},
+            {0b0111, "D-LOCATION UPDATE REJECT"},
+            {0b1001, "D-LOCATION UPDATE PROCEEDING"},
+            {0b1010, "D-ATTACH/DETACH GROUP IDENTITY"},
+            {0b1011, "D-ATTACH/DETACH GROUP IDENTITY ACK"},
+            {0b1100, "D-MM STATUS"},
+            {0b1111, "MM PDU/FUNCTION NOT SUPPORTED"}
+        };
+
+        return getMapValue(pduType, val);
     }
     if (strEqualsU(key, "reject cause"))
     {
-        switch (val)
+        std::map<uint32_t, std::string> rejectCause
         {
-        case 0b00001:
-            valueAsString = "ITSI/ATSI unknown (system rejection)";
-            break;
-        case 0b00010:
-            valueAsString = "Illegal MS (system rejection)";
-            break;
-        case 0b00011:
-            valueAsString = "LA not allowed (LA rejection)";
-            break;
-        case 0b00100:
-            valueAsString = "LA unknown (LA rejection)";
-            break;
-        case 0b00101:
-            valueAsString = "Network failure (cell rejection)";
-            break;
-        case 0b00110:
-            valueAsString = "Congestion (cell rejection)";
-            break;
-        case 0b00111:
-            valueAsString = "Forward registration failure (cell rejection)";
-            break;
-        case 0b01000:
-            valueAsString = "Service not subscribed (LA rejection)";
-            break;
-        case 0b01001:
-            valueAsString = "Mandatory element error (system rejection)";
-            break;
-        case 0b01010:
-            valueAsString = "Message consistency error (system rejection)";
-            break;
-        case 0b01011:
-            valueAsString = "Roaming not supported (LA rejection)";
-            break;
-        case 0b01100:
-            valueAsString = "Migration not supported (LA rejection)";
-            break;
-        case 0b01101:
-            valueAsString = "No cipher KSG (cell rejection)";
-            break;
-        case 0b01110:
-            valueAsString = "Identified cipher KSG not supported (cell rejection)";
-            break;
-        case 0b01111:
-            valueAsString = "Requested cipher key type not available (cell rejection)";
-            break;
-        case 0b10000:
-            valueAsString = "Identified cipher key not available (cell rejection)";
-            break;
-        case 0b10010:
-            valueAsString = "Ciphering required (cell rejection)";
-            break;
-        case 0b10011:
-            valueAsString = "Authentication failure (system rejection)";
-            break;
+            {0b00001, "ITSI/ATSI unknown (system rejection)"},
+            {0b00010, "Illegal MS (system rejection)"},
+            {0b00011, "LA not allowed (LA rejection)"},
+            {0b00100, "LA unknown (LA rejection)"},
+            {0b00101, "Network failure (cell rejection)"},
+            {0b00110, "Congestion (cell rejection)"},
+            {0b00111, "Forward registration failure (cell rejection)"},
+            {0b01000, "Service not subscribed (LA rejection)"},
+            {0b01001, "Mandatory element error (system rejection)"},
+            {0b01010, "Message consistency error (system rejection)"},
+            {0b01011, "Roaming not supported (LA rejection)"},
+            {0b01100, "Migration not supported (LA rejection)"},
+            {0b01101, "No cipher KSG (cell rejection)"},
+            {0b01110, "Identified cipher KSG not supported (cell rejection)"},
+            {0b01111, "Requested cipher key type not available (cell rejection)"},
+            {0b10000, "Identified cipher key not available (cell rejection)"},
+            {0b10010, "Ciphering required (cell rejection)"},
+            {0b10011, "Authentication failure"}
+        };
 
-        default:
-            valueAsString = "reserved";
-            break;
-        }
+        return getMapValue(rejectCause, val);
     }
     if (strEqualsU(key, "type 3/4 element identifier"))
     {
         // 16.10.51 Table 16.89
 
-        switch (val)
+        std::map<uint32_t, std::string> type34ElementIdentifier
         {
-        case 0b0000:
-            valueAsString = "Reserved for future extension";
-            break;
-        case 0b0001:
-            valueAsString = "Default group attachment lifetime";
-            break;
-        case 0b0010:
-            valueAsString = "New registered area";
-            break;
-        case 0b0011:
-            valueAsString = "Group identity location demand";
-            break;
-        case 0b0100:
-            valueAsString = "Group report response";
-            break;
-        case 0b0101:
-            valueAsString = "Group identity location accept";
-            break;
-        case 0b0110:
-            valueAsString = "DM-MS address";
-            break;
-        case 0b0111:
-            valueAsString = "Group identity downlink";
-            break;
-        case 0b1000:
-            valueAsString = "Group identity uplink";
-            break;
-        case 0b1001:
-            valueAsString = "Authentication uplink";
-            break;
-        case 0b1010:
-            valueAsString = "Authentication downlink";
-            break;
-        case 0b1011:
-            valueAsString = "Extended capabilities";
-            break;
-        case 0b1100:
-            valueAsString = "Group Identity Security Related Information";
-            break;
-        case 0b1101:
-            valueAsString = "Reserved for any future specified Type 3/4 element";
-            break;
-        case 0b1110:
-            valueAsString = "Reserved for any future specified Type 3/4 element";
-            break;
-        case 0b1111:
-            valueAsString = "Proprietary";
-            break;
-        }
+            {0b0000, "Reserved for future extension"},
+            {0b0001, "Default group attachment lifetime"},
+            {0b0010, "New registered area"},
+            {0b0011, "Group identity location demand"},
+            {0b0100, "Group report response"},
+            {0b0101, "Group identity location accept"},
+            {0b0110, "DM-MS address"},
+            {0b0111, "Group identity downlink"},
+            {0b1000, "Group identity uplink"},
+            {0b1001, "Authentication uplink"},
+            {0b1010, "Authentication downlink"},
+            {0b1011, "Extended capabilities"},
+            {0b1100, "Group Identity Security Related Information"},
+            {0b1101, "Reserved for any future specified Type 3/4 element"},
+            {0b1110, "Reserved for any future specified Type 3/4 element"},
+            {0b1111, "Proprietary"}
+        };
+
+        return getMapValue(type34ElementIdentifier, val);
     }
-    return valueAsString;
+    return "unknown";
 }

@@ -235,7 +235,6 @@ void Mm::parseDOtarGckProvide(Pdu pdu)
 
     uint32_t pos = 8;                                                           // pdu type
     uint32_t acknowledgementFlag = pdu.getValue(pos, 1);
-    m_report->add("acknowledgement flag", pdu.getValue(pos, 1));
     pos += 1;
 
     if (acknowledgementFlag)
@@ -244,7 +243,7 @@ void Mm::parseDOtarGckProvide(Pdu pdu)
     }
     else
     {
-        m_report->add("reserved", pdu.getValue(pos, 1));
+        // reserved
     }
     pos += 1;
 
@@ -363,7 +362,6 @@ void Mm::parseDOtarKeyAssociateDemand(Pdu pdu)
 
     uint32_t pos = 8;                                                           // pdu type
     uint32_t acknowledgementFlag = pdu.getValue(pos, 1);
-    m_report->add("acknowledgement flag", pdu.getValue(pos, 1));
     pos += 1;
 
     if (acknowledgementFlag)
@@ -426,10 +424,20 @@ void Mm::parseDOtarNewcell(Pdu pdu)
     m_report->add("dck forwarding result", pdu.getValue(pos, 1));
     pos += 1;
 
-    m_report->add("cck provision flag", pdu.getValue(pos, 1));
+    bool cckProvisionFlag = pdu.getValue(pos, 1);
     pos += 1;
 
-    pos = parseCckInformation(pdu, pos);
+    if (cckProvisionFlag)
+    {
+        pos = parseCckInformation(pdu, pos);
+    }
+
+    bool mBit = pdu.getValue(pos, 1);
+
+    if (mBit)
+    {
+        pos = parseType34Elements(pdu, pos);
+    }
 
     m_report->send();
 }
@@ -590,8 +598,7 @@ void Mm::parseDOtarKeyStatusDemand(Pdu pdu)
     m_report->start("MM", "D-OTAR KEY STATUS demand", m_tetraTime, m_macAddress);
 
     uint32_t pos = 8;                                                           // pdu type
-    uint32_t acknowledgementFlag = pdu.getValue(pos, 1);
-    m_report->add("acknowledgement flag", pdu.getValue(pos, 1));
+    bool acknowledgementFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (acknowledgementFlag)

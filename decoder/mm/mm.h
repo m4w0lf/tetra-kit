@@ -1,6 +1,7 @@
 #ifndef MM_H
 #define MM_H
 #include <sstream>
+#include <map>
 #include "../common/tetra.h"
 #include "../common/layer.h"
 #include "../common/log.h"
@@ -17,7 +18,6 @@ namespace Tetra {
         void service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime tetraTime, MacAddress macAddress);
 
     private:
-        void parseXXX(Pdu pdu);
         void parseDOtar(Pdu pdu);
         void parseDOtarCckProvide(Pdu pdu);
         void parseDOtarSckProvide(Pdu pdu);
@@ -69,9 +69,11 @@ namespace Tetra {
         uint64_t parseGISRI(Pdu pdu, uint64_t pos);
         uint64_t parseGroupReportResponse(Pdu pdu, uint64_t pos);
         uint64_t parseNewRegisteredArea(Pdu pdu, uint64_t pos);
+        uint64_t parseProprietary(Pdu pdu, uint64_t pos);
         uint64_t parseScchInformationAndDistribution(Pdu pdu, uint64_t pos);
         uint64_t parseSckInformation(Pdu pdu, uint64_t pos);
         std::string valueToString(std::string key, uint32_t val);
+        std::string getMapValue(std::map<uint32_t, std::string> informationElement, uint32_t val);
     };
 
 };
