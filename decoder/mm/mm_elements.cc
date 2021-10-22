@@ -219,6 +219,8 @@ uint64_t Mm::parseCipheringParameters(Pdu pdu, uint64_t pos)
         pos += 1;
         m_report->add("security information protocol support", pdu.getValue(pos, 1));
         pos += 1;
+        // reserved
+        pos += 1;
     }
     else                                                                        // Class 2
     {
