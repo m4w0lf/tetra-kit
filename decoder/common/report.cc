@@ -2,6 +2,8 @@
 
 using namespace Tetra;
 
+typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> GenericValue;
+
 /**
  * @brief Constructor
  *
@@ -158,8 +160,8 @@ void Report::startUPlane(std::string service, std::string pdu, const TetraTime t
 
 void Report::add(std::string field, std::string val)
 {
-    rapidjson::Value key(field.c_str(), m_jdoc.GetAllocator());
-    rapidjson::Value dat(val.c_str(),   m_jdoc.GetAllocator());;
+    GenericValue key(field.c_str(), m_jdoc.GetAllocator());
+    GenericValue dat(val.c_str(),   m_jdoc.GetAllocator());;
 
     m_jdoc.AddMember(key, dat, m_jdoc.GetAllocator());
 }
@@ -200,8 +202,8 @@ void Report::add(std::string field, uint32_t val)
 
 void Report::add(std::string field, uint64_t val)
 {
-    rapidjson::Value key(field.c_str(), m_jdoc.GetAllocator());
-    rapidjson::Value dat(val);
+    GenericValue key(field.c_str(), m_jdoc.GetAllocator());
+    GenericValue dat(val);
 
     m_jdoc.AddMember(key, dat, m_jdoc.GetAllocator());
 }
@@ -213,8 +215,8 @@ void Report::add(std::string field, uint64_t val)
 
 void Report::add(std::string field, double val)
 {
-    rapidjson::Value key(field.c_str(), m_jdoc.GetAllocator());
-    rapidjson::Value dat(val);
+    GenericValue key(field.c_str(), m_jdoc.GetAllocator());
+    GenericValue dat(val);
 
     m_jdoc.AddMember(key, dat, m_jdoc.GetAllocator());
 }
@@ -239,24 +241,24 @@ void Report::add(std::string field, Pdu pdu)
 
 void Report::addArray(std::string name, std::vector<std::tuple<std::string, uint64_t>> & infos)
 {
-    rapidjson::Value arr(rapidjson::kArrayType);
+    GenericValue arr(rapidjson::kArrayType);
 
     for (std::size_t cnt = 0; cnt < infos.size(); cnt++)
     {
-        rapidjson::Value jobj;
+        GenericValue jobj;
         jobj.SetObject();
 
         std::string field = std::get<0>(infos[cnt]);
         uint64_t val = std::get<1>(infos[cnt]);
 
-        jobj.AddMember(rapidjson::Value(field.c_str(), m_jdoc.GetAllocator()).Move(),
-                       rapidjson::Value(val).Move(),
+        jobj.AddMember(GenericValue(field.c_str(), m_jdoc.GetAllocator()).Move(),
+                       GenericValue(val).Move(),
                        m_jdoc.GetAllocator());
 
         arr.PushBack(jobj, m_jdoc.GetAllocator());
     }
 
-    m_jdoc.AddMember(rapidjson::Value(name.c_str(), m_jdoc.GetAllocator()), arr, m_jdoc.GetAllocator());
+    m_jdoc.AddMember(GenericValue(name.c_str(), m_jdoc.GetAllocator()), arr, m_jdoc.GetAllocator());
 }
 
 /**
