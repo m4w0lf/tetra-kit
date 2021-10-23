@@ -1,0 +1,17 @@
+*.cflags
+*.config
+*.cxxflags
+*.files
+*.includes
+*.creator
+*.creator.user
+**/*.o
+**/log*.txt
+codec/scoder
+codec/ccoder
+codec/sdecoder
+codec/cdecoder
+recorder/wav/cdecoder
+recorder/wav/sdecoder
+decoder/decoder
+recorder/recorder

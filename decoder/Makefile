@@ -9,6 +9,10 @@ SRC = main.cc decoder.cc \
 	sndcp/sndcp.cc \
 	cmce/cmce.cc cmce/sds/sds.cc cmce/sds/lip.cc \
 	mm/mm.cc \
+	mm/mm_elements.cc \
+	mm/d_authentication.cc \
+	mm/d_mm_status.cc \
+	mm/d_otar.cc \
 	uplane/uplane.cc \
 	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc
 
