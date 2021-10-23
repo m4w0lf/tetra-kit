@@ -43,10 +43,12 @@ void Mm::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime t
     switch (pduType)
     {
     case 0b0000:
+        txt = "D-OTAR";
         parseDOtar(pdu);
         break;
 
     case 0b0001:
+        txt = "D-AUTHENTICATION";
         parseDAuthentication(pdu);
         break;
 
@@ -79,6 +81,7 @@ void Mm::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime t
         break;
 
     case 0b1010:
+        txt = "D-ATTACH/DETACH GROUP IDENTITY";
         parseDAttachDetachGroupIdentity(pdu);
         break;
 

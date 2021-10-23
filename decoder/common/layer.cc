@@ -54,3 +54,33 @@ void Layer::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTim
 {
     service(macLogicalChannel, tetraTime, macAddress);
 }
+
+/**
+ * @brief Find string in map for a given value
+ *
+ */
+
+std::string Layer::getMapValue(std::map<uint32_t, std::string> informationElement, uint32_t val)
+{
+    std::map<uint32_t, std::string>::iterator search = informationElement.find(val);
+
+    std::string res = "not found";
+
+    if (search != informationElement.end())
+    {
+        res = search->second;
+    }
+
+    return res;
+}
+
+/**
+ * @brief Convert a value from a map to string for reporting, must be implemented
+ *        in classes using this function
+ *
+ */
+
+std::string Layer::valueToString(std::string key, uint32_t val)
+{
+    return "not found";
+}

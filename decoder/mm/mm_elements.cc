@@ -578,18 +578,29 @@ uint64_t Mm::parseSckInformation(Pdu pdu, uint64_t pos)
     return pos;
 }
 
+/**
+ * @brief Find value in map
+ *
+ */
+
 std::string Mm::getMapValue(std::map<uint32_t, std::string> informationElement, uint32_t val)
 {
-    auto search = informationElement.find(val);
-    if (search != informationElement.end())
+    // get the default base value
+    std::string res = Layer::getMapValue(informationElement, val);
+
+    // map value was not found, so return reserved keyword instead
+    if (strEqualsU(res, "not found"))
     {
-        return search->second;
+        res = "reserved";
     }
-    else
-    {
-        return "reserved";
-    }
+
+    return res;
 }
+
+/**
+ * @brief Convert MM elements value to string
+ *
+ */
 
 std::string Mm::valueToString(std::string key, uint32_t val)
 {

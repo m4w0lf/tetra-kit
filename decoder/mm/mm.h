@@ -1,7 +1,6 @@
 #ifndef MM_H
 #define MM_H
 #include <sstream>
-#include <map>
 #include "../common/tetra.h"
 #include "../common/layer.h"
 #include "../common/log.h"
@@ -72,6 +71,7 @@ namespace Tetra {
         uint64_t parseProprietary(Pdu pdu, uint64_t pos);
         uint64_t parseScchInformationAndDistribution(Pdu pdu, uint64_t pos);
         uint64_t parseSckInformation(Pdu pdu, uint64_t pos);
+
         std::string valueToString(std::string key, uint32_t val);
         std::string getMapValue(std::map<uint32_t, std::string> informationElement, uint32_t val);
     };

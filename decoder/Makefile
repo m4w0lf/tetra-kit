@@ -8,11 +8,7 @@ SRC = main.cc decoder.cc \
 	mle/mle.cc \
 	sndcp/sndcp.cc \
 	cmce/cmce.cc cmce/sds/sds.cc cmce/sds/lip.cc \
-	mm/mm.cc \
-	mm/mm_elements.cc \
-	mm/d_authentication.cc \
-	mm/d_mm_status.cc \
-	mm/d_otar.cc \
+	mm/mm.cc mm/mm_elements.cc mm/d_authentication.cc mm/d_mm_status.cc mm/d_otar.cc \
 	uplane/uplane.cc \
 	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc
 
@@ -36,3 +32,7 @@ test: test.o
 
 clean:
 	rm -f $(OBJ) $(EXE) *.o *~
+
+final:
+	make clean
+	make
