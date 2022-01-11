@@ -39,7 +39,6 @@ namespace Tetra {
         MacAddress macAddress;                                                  // MAC address
         TetraTime  startTime;                                                   // start time of defragemnter (will be used to stop on missing/invalid end frag packet receive)
 
-        //std::vector<uint8_t> macRessource;
         void start(const MacAddress address, const TetraTime timeSlot);
         void append(Pdu sdu, const MacAddress address);
         void stop();

@@ -418,8 +418,8 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 
         switch (pduType)
         {
-        case 0b00:                                                              // MAC PDU structure for downlink (TMA) MAC-RESSOURCE
-            txt = "MAC-RESSOURCE";
+        case 0b00:                                                              // MAC PDU structure for downlink (TMA) MAC-RESOURCE
+            txt = "MAC-RESOURCE";
             tmSdu = pduProcessResource(data, macLogicalChannel, &fragmentedPacketFlag);
 
             if (fragmentedPacketFlag)
@@ -469,7 +469,7 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
             if ((macLogicalChannel != STCH) && (macLogicalChannel != SCH_HD))
             {
                 txt = "MAC-D-BLCK";                                             // 21.4.1 not sent on SCH/HD or STCH
-                //tmSdu = pduProcessDBlock(data);
+                tmSdu = pduProcessDBlock(data);
             }
             else
             {
@@ -500,7 +500,7 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 }
 
 /**
- * @brief Decode length of MAC-RESSOURCE PDU - see 21.4.3.1 table 21.55
+ * @brief Decode length of MAC-RESOURCE PDU - see 21.4.3.1 table 21.55
  *
  *        WARNING: length is in octet, not in bits
  *
@@ -654,7 +654,7 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 }
 
 /**
- * @brief Process MAC-RESSOURCE and return TM-SDU (to LLC or MAC-FRAG) - see 21.4.3.1 table 21.55
+ * @brief Process MAC-RESOURCE and return TM-SDU (to LLC or MAC-FRAG) - see 21.4.3.1 table 21.55
  *
  * Maximum length (table 21.56):
  *    SCH/F   239 bits
@@ -673,7 +673,7 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 
 Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bool * fragmentedPacketFlag)
 {
-    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_ressource", mac_pdu.toString().c_str());
+    m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_resource", mac_pdu.toString().c_str());
 
     Pdu pdu = mac_pdu;
 
@@ -1077,7 +1077,7 @@ Pdu Mac::pduProcessDBlock(Pdu mac_pdu)
     Pdu pdu = mac_pdu;
     Pdu sdu;
 
-    static const std::size_t MIN_SIZE = 18;
+    static const std::size_t MIN_SIZE = 218;
 
     if (pdu.size() >= MIN_SIZE)
     {
