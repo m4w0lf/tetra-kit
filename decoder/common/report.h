@@ -44,7 +44,8 @@ namespace Tetra {
         int m_socketFd;                                                         ///< UDP socket to write to
         Tetra::Log * m_log;                                                     ///< Screen logger
 
-        rapidjson::Document m_jdoc;                                             ///< rapidjson document
+        ///< rapidjson document
+        rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_jdoc;
     };
 };
 
