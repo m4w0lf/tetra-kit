@@ -100,8 +100,8 @@ void Mm::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime t
     default:                                                                    // reserved
         break;
     }
-    
-    printf("serv_mm_sub : TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu \n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), pdu.size());
+
+    m_log->print(LogLevel::MEDIUM, "serv_mm_sub : TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu \n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), pdu.size());
 }
 
 

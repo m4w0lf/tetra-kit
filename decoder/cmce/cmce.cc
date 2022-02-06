@@ -185,12 +185,12 @@ void Cmce::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime
 
     if (bCompletePrint)
     {
-        printf("service_cmce: TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu  cid=%u  ssi=%8u  usage_marker=%2u, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn,
-               txt.c_str(), pdu.size(), cid, m_macAddress.ssi, m_macAddress.usageMarker, m_macAddress.encryptionMode);
+        m_log->print(LogLevel::LOW, "service_cmce: TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu  cid=%u  ssi=%8u  usage_marker=%2u, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn,
+                     txt.c_str(), pdu.size(), cid, m_macAddress.ssi, m_macAddress.usageMarker, m_macAddress.encryptionMode);
     }
     else
     {
-        printf("ser_cmce_sds: TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu \n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), pdu.size());
+        m_log->print(LogLevel::LOW, "ser_cmce_sds: TN/FN/MN = %2u/%2u/%2u  %-20s  len=%3lu \n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), pdu.size());
     }
 }
 
