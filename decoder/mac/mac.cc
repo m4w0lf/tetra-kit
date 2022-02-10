@@ -368,7 +368,7 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
  *   STCH   = 6,
  *   TCH_S  = 7,
  *   TCH    = 8,
- *   unkown = 9 *
+ *   unkown = 9
  */
 
 void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
@@ -514,27 +514,30 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
         pduCount++;                                                             // for the protection loop
 
         // DEBUG informations only
-        printf("%-20s  ", txt.c_str());
         if (dissociatePduFlag)
         {
-            
-            if (pduSizeInMac > -1)
+            if (pduCount > 1)
             {
-                //printf(" null\n");
-                //else
-                printf("diss %d %d", pduCount, (int32_t)tmSdu.size()); //, pdu.toString().c_str());
-                printf(" %d - %d = %d", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
+                if (pduSizeInMac > -1)
+                {
+                    printf("*** %-20s  ", txt.c_str());
+                    printf("diss %d %d", pduCount, (int32_t)tmSdu.size()); //, pdu.toString().c_str());
+                    printf(" %d - %d = %d\n", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
+                }
+                else
+                {
+                    //printf("*** %-20s  NULL\n", txt.c_str());
+                }
             }
         }
-        printf("\n");
-      
+
         // service LLC
         if ((!tmSdu.isEmpty()) && bSendTmSduToLlc)
         {
             // service LLC
             m_llc->service(tmSdu, macLogicalChannel, m_tetraTime, m_macAddress);
         }
-        
+
         if (dissociatePduFlag)
         {
             // dissociate PDU until null PDU found or not enough space is left
@@ -754,7 +757,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
     Pdu pdu = mac_pdu;
 
     *fragmentedPacketFlag = false;
-    
+
     *pduSizeInMac = 0;
 
     // check if we have a NULL PDU
@@ -764,10 +767,10 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
         // in the case of a null pdu, all other fields should be
         // discarded by the MS (see 21.4.3.1) so stop here
         *pduSizeInMac = -1;                                                     // null pdu flag
-        
+
         return Pdu();                                                           // return empty pdu
     }
-    
+
     // if we reach here, we don't have a NULL PDU
 
     uint32_t pos = 2;                                                           // MAC pdu type

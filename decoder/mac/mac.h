@@ -18,7 +18,7 @@ namespace Tetra {
      * @brief MAC layers class
      *
      */
-    
+
     class Mac : public Layer {
     public:
         Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, bool bRemoveFillBits);
