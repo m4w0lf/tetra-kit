@@ -375,15 +375,16 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s data = %s\n", "service_upper_mac", macLogicalChannelName(macLogicalChannel).c_str(), data.toString().c_str());
 
-    std::string txt = "?";
-    uint8_t pduType = 0;
-    uint8_t subType = 0;
-    uint8_t broadcastType = 0;
+    std::string txt;
+    uint8_t pduType;
+    uint8_t subType;
+    uint8_t broadcastType;
     Pdu tmSdu;
-    bool bSendTmSduToLlc = true;
-    bool fragmentedPacketFlag  = false;
+    bool bSendTmSduToLlc;
 
     Pdu pdu(data);
+
+    bool fragmentedPacketFlag  = false;
 
     bool dissociatePduFlag;
     int pduCount = 0;                                                           // number of pdu dissociated
@@ -397,6 +398,12 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
     {
         dissociatePduFlag = false;
 
+        txt = "?";
+        bSendTmSduToLlc = true;        
+        pduType = 0;
+        subType = 0;
+        broadcastType = 0;
+ 
         switch (macLogicalChannel)
         {
         case AACH:
@@ -447,6 +454,7 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
                 break;
 
             case 0b01:                                                          // MAC-FRAG or MAC-END (TMA)
+                // should never happen when dissociating, ie pduCount > 1
                 subType = pdu.getValue(2, 1);
                 if (subType == 0)                                               // MAC-FRAG 21.4.3.2
                 {
@@ -580,17 +588,18 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
  *
  *        WARNING: length is in octet, not in bits
  *
+ *        NOTE:    0 length is reserved, but we use it here to indicate also invalid result
  */
 
-uint32_t Mac::decodeLength(uint32_t val)
+int32_t Mac::decodeLength(uint32_t val)
 {
     uint8_t  Y2  = 1;
     uint8_t  Z2  = 1;                                                           // for pi/4-DQPSK
-    uint32_t ret = -1;
+    uint32_t ret = 0;
 
     if ((val == 0b000000) || (val == 0b111011) || val == (0b111100))
     {
-        ret = -1;                                                               // reserved
+        ret = 0;                                                                // reserved
     }
     else if (val <= 0b010010)
     {
@@ -602,7 +611,7 @@ uint32_t Mac::decodeLength(uint32_t val)
     }
     else if (val == 0b111101)                                                   // QAM only
     {
-        ret = -1;
+        ret = 0;
     }
     else if (val == 0b111110)                                                   // second half slot stolen in STCH
     {
@@ -943,7 +952,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
     // in case of NULL pdu, the length shall be 16 bits
     if (! (*fragmentedPacketFlag))                                              // FIXME to check
     {
-        *pduSizeInMac = (decodeLength(length) * 8);
+        *pduSizeInMac = decodeLength(length) * 8;
     }
 
     int32_t sdu_length = (int32_t)decodeLength(length) * 8 - (int32_t)pos;
