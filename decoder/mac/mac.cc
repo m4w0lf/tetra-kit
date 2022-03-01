@@ -506,15 +506,15 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
  *
  */
 
-uint32_t Mac::decodeLength(uint32_t val)
+int32_t Mac::decodeLength(uint32_t val)
 {
     uint8_t  Y2  = 1;
     uint8_t  Z2  = 1;                                                           // for pi/4-DQPSK
-    uint32_t ret = -1;
+    uint32_t ret = 0;
 
     if ((val == 0b000000) || (val == 0b111011) || val == (0b111100))
     {
-        ret = -1;                                                               // reserved
+        ret = 0;                                                                // reserved
     }
     else if (val <= 0b010010)
     {
@@ -526,7 +526,7 @@ uint32_t Mac::decodeLength(uint32_t val)
     }
     else if (val == 0b111101)                                                   // QAM only
     {
-        ret = -1;
+        ret = 0;
     }
     else if (val == 0b111110)                                                   // second half slot stolen in STCH
     {
@@ -853,7 +853,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
     Pdu sdu;
 
     // in case of NULL pdu, the length shall be 16 bits
-    int32_t sdu_length = (int32_t)decodeLength(length) * 8 - (int32_t)pos;
+    int32_t sdu_length = decodeLength(length) * 8 - (int32_t)pos;
 
     if (sdu_length > 0)
     {

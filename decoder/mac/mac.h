@@ -18,7 +18,7 @@ namespace Tetra {
      * @brief MAC layers class
      *
      */
-    
+
     class Mac : public Layer {
     public:
         Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, bool bRemoveFillBits);
@@ -46,7 +46,7 @@ namespace Tetra {
         uint8_t m_secondSlotStolenFlag;                                         ///< 1 if second slot is stolen
         bool m_bRemoveFillBits;                                                 ///< Remove filling bits flags
         Pdu removeFillBits(const Pdu pdu);
-        uint32_t decodeLength(uint32_t val);
+        int32_t decodeLength(uint32_t val);
 
         // decoding functions per clause 8
         ViterbiCodec * m_viterbiCodec1614;                                      ///< Viterbi codec
