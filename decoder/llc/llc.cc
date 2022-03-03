@@ -311,7 +311,7 @@ void Llc::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
 
     if (bPrint)
     {
-        m_log->print(LogLevel::LOW, "service_llc : TN/FN/MN = %2u/%2u/%2u  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str());
+        m_log->print(LogLevel::HIGH, "service_llc : TN/FN/MN = %2u/%2u/%2u  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str());
     }
 
     m_log->print(LogLevel::HIGH, "service_llc : TN/FN/MN = %2u/%2u/%2u  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str());

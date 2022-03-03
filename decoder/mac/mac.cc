@@ -375,35 +375,34 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s data = %s\n", "service_upper_mac", macLogicalChannelName(macLogicalChannel).c_str(), data.toString().c_str());
 
+    static const int32_t MIN_MAC_RESOURCE_SIZE = 40;                            // NULL_PDU size is 16, but valid MAC-Resource must be longer than 40 bits
+
+    Pdu pdu(data);
+
     std::string txt;
     uint8_t pduType;
     uint8_t subType;
     uint8_t broadcastType;
-    Pdu tmSdu;
-    bool bSendTmSduToLlc;
 
-    Pdu pdu(data);
-
+    bool bSendTmSduToLlc = true;
     bool fragmentedPacketFlag  = false;
 
-    bool dissociatePduFlag;
-    int pduCount = 0;                                                           // number of pdu dissociated
+    Pdu tmSdu;
+
+    bool dissociatePduFlag = false;
     int32_t pduSizeInMac = 0;                                                   // pdu size in MAC frame to handle MAC decomposition
 
     m_macState.logicalChannel = macLogicalChannel;
 
-    dissociatePduFlag = true;                                                   // only to enter loop
-
-    while (dissociatePduFlag && (pduCount < 32))
+    int pduCount = 0;                                                           // number of pdu dissociated
+    do
     {
+        txt = "?";
+
         dissociatePduFlag = false;
 
-        txt = "?";
-        bSendTmSduToLlc = true;        
-        pduType = 0;
-        subType = 0;
-        broadcastType = 0;
- 
+        bSendTmSduToLlc = true;
+
         switch (macLogicalChannel)
         {
         case AACH:
@@ -435,8 +434,6 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
             // we are not in traffic mode
             pduType = pdu.getValue(0, 2);
 
-            dissociatePduFlag = false;
-
             switch (pduType)
             {
             case 0b00:                                                          // MAC PDU structure for downlink MAC-RESOURCE (TMA)
@@ -447,14 +444,13 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
                     // tmSdu to be hold until MAC-END received
                     bSendTmSduToLlc = false;
                 }
-                else
+                else if (pduSizeInMac > 0)                                      // apply disassociation if it is neither NULL PDU nor MAC-Frag
                 {
                     dissociatePduFlag = true;
                 }
                 break;
 
             case 0b01:                                                          // MAC-FRAG or MAC-END (TMA)
-                // should never happen when dissociating, ie pduCount > 1
                 subType = pdu.getValue(2, 1);
                 if (subType == 0)                                               // MAC-FRAG 21.4.3.2
                 {
@@ -475,13 +471,11 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
                 switch (broadcastType)
                 {
                 case 0b00:                                                      // SYSINFO see 21.4.4.1 / BNCH on SCH_HD or or STCH
-                    dissociatePduFlag = true;
                     txt = "SYSINFO";
                     tmSdu = pduProcessSysinfo(pdu, &pduSizeInMac);              // TM-SDU (MLE data)
                     break;
 
                 case 0b01:                                                      // ACCESS-DEFINE see 21.4.4.3, no sdu
-                    dissociatePduFlag = true;
                     txt = "ACCESS-DEFINE";
                     pduProcessAccessDefine(pdu, &pduSizeInMac);                 // 21.4.4.3 - no sdu
                     break;
@@ -492,7 +486,6 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
                 break;
 
             case 0b11:                                                          // MAC-D-BLOCK (TMA)
-                dissociatePduFlag = true;
                 subType = pdu.getValue(2, 1);
 
                 if ((macLogicalChannel != STCH) && (macLogicalChannel != SCH_HD))
@@ -546,41 +539,17 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
             m_llc->service(tmSdu, macLogicalChannel, m_tetraTime, m_macAddress);
         }
 
-        if (dissociatePduFlag)
+        // Check the remaining size for disassociation
+        if (((int32_t)pdu.size() - pduSizeInMac) < MIN_MAC_RESOURCE_SIZE)
         {
-            // dissociate PDU until null PDU found or not enough space is left
-            // for a Null PDU : 16 bits (23.4.3.3)
-            if (pduSizeInMac < 0)
-            {
-                //printf("          null pdu\n");
-                dissociatePduFlag = false;
-            }
-            else if (((int32_t)pdu.size() - pduSizeInMac) < 16)
-            {
-                //printf("          no null pdu but not enough space left\n");
-                dissociatePduFlag = false;
-            }
-            else
-            {
-                // continue dissociation
-                //printf("                            = %d - %d = %d\n", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
-                pdu = Pdu(pdu, pduSizeInMac);
-                //printf("          pdu new size %3d   %s\n", (int32_t)pdu.size(), pdu.toString().c_str());
-            }
+            break;                                                              // not enough remaining bits to decode
+        }
+        else if (dissociatePduFlag)
+        {
+            pdu = Pdu(pdu, pduSizeInMac);                                       // shift the packet
         }
 
-        /*if (dissociatePduFlag)
-        {
-            printf("diss %d ", pduCount); //, pdu.toString().c_str());
-            printf(" %d - %d = %d\n", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
-            }*/
-   }
-
-    // if ((!tmSdu.isEmpty()) && bSendTmSduToLlc)
-    // {
-    //     // service LLC
-    //     m_llc->service(tmSdu, macLogicalChannel, m_tetraTime, m_macAddress);
-    // }
+    } while (bSendTmSduToLlc && dissociatePduFlag && (pduCount < 32));          // pduCount for loop protection
 }
 
 /**
