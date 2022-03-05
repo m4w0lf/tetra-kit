@@ -197,7 +197,6 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
         }
     }
 
-    //printf("BURST %d\n", burstType);
     m_secondSlotStolenFlag = 0;                                                 // stolen flag lifetime is NDB_SF burst life only
 
     std::vector<uint8_t> bkn1;                                                  // busrt block BKN1
@@ -514,6 +513,7 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 
         pduCount++;                                                             // for the protection loop
 
+#if 0
         // DEBUG informations only
         if (dissociatePduFlag)
         {
@@ -525,12 +525,9 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
                     printf("diss %d %d", pduCount, (int32_t)tmSdu.size()); //, pdu.toString().c_str());
                     printf(" %d - %d = %d\n", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
                 }
-                else
-                {
-                    //printf("*** %-20s  NULL\n", txt.c_str());
-                }
             }
         }
+#endif
 
         // service LLC
         if ((!tmSdu.isEmpty()) && bSendTmSduToLlc)
@@ -653,16 +650,6 @@ void Mac::pduProcessAach(Pdu pdu)
             }
         }
     }
-
-    //if(m_macState.downlinkUsage == TRAFFIC)
-    /*printf("AACH        : TN/FN/MN = %2d/%2d/%2d                        burst=%d  marker=%2u   field1 = %02u  field2 = %2u\n",
-           m_tetraTime.tn,
-           m_tetraTime.fn,
-           m_tetraTime.mn,
-           curBurstType,
-           m_macState.downlinkUsageMarker,
-           field1,
-           field2);*/
 }
 
 /**
@@ -677,12 +664,6 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 
     if (m_bRemoveFillBits)
     {
-        // if (m_log->getLevel() == LogLevel::VERYHIGH)
-        // {
-        //     printf(" ------- mac_remove_fill_bits BEFORE -- %u bits\n", (uint32_t)ret.size());
-        //     ret.print();
-        // }
-
         if (ret.at(ret.size() - 1) == 1)
         {
             ret.resize(ret.size() - 1);                                         // 23.4.3.2 remove last 1
@@ -695,12 +676,6 @@ Pdu Mac::removeFillBits(const Pdu pdu)
             }
             ret.resize(ret.size() - 1);                                         // 23.4.3.2 then remove last 1
         }
-
-        // if (m_log->getLevel() == LogLevel::VERYHIGH)
-        // {
-        //     printf(" ------- mac_remove_fill_bits AFTER --- %u bits\n", (uint32_t)ret.size());
-        //     ret.print();
-        // }
     }
 
     return ret;
