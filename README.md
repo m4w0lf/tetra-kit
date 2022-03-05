@@ -28,6 +28,13 @@ by an external program
 
 The decoder implements a soft synchronizer allowing missing frames (50 bursts) before loosing synchronization.
 
+News
+====
+v1.1
+----
+- MAC resource disassembly has been added
+- Wireshark output capture is available on `localhost:4729` with filter `gsmtap` or similar (use `decoder -w`)
+
 Workflow
 ========
 
@@ -130,8 +137,7 @@ Options:
   -h print this help
 ```
 
-When using the `-a` option (generating the raw files in `recorder/raw` folder), you can listen
-voice in almost realtime thanks to the scripts provided by @orestescaminha:
+You can listen voice in almost realtime thanks to the scripts provided by @orestescaminha:
 
 ```sh
 $ cd recoder/raw
@@ -150,6 +156,7 @@ Options:
   -o <file> record data to binary file (can be replayed with -i option)
   -d <level> print debug information
   -f keep fill bits
+  -w enable wireshark output [EXPERIMENTAL]
   -h print this help
 ```
 
