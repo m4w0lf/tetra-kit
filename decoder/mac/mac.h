@@ -9,6 +9,7 @@
 #include "../llc/llc.h"
 #include "../mle/mle.h"
 #include "../uplane/uplane.h"
+#include "../wiremsg/wiremsg.h"
 #include "viterbi.h"
 #include "macdefrag.h"
 
@@ -21,7 +22,7 @@ namespace Tetra {
 
     class Mac : public Layer {
     public:
-        Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, bool bRemoveFillBits);
+        Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, WireMsg * wMsg, bool bRemoveFillBits);
         ~Mac();
 
         void incrementTn();
@@ -36,6 +37,7 @@ namespace Tetra {
         Llc    * m_llc;                                                         ///< LLC layer
         Mle    * m_mle;                                                         ///< MLE layer
         UPlane * m_uPlane;                                                      ///< U-Plane layer
+        WireMsg * m_wireMsg;                                                    ///< Wireshark output
 
         MacDefrag * m_macDefrag;                                                ///< MAC defragmenter
 

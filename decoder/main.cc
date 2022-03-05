@@ -50,9 +50,10 @@ int main(int argc, char * argv[])
     int programMode = STANDARD_MODE;
     int debugLevel = 1;
     bool bRemoveFillBits = true;
+    bool bEnableWiresharkOutput = false;
 
     int option;
-    while ((option = getopt(argc, argv, "hr:t:i:o:d:f")) != -1)
+    while ((option = getopt(argc, argv, "hwr:t:i:o:d:f")) != -1)
     {
         switch (option)
         {
@@ -82,6 +83,10 @@ int main(int argc, char * argv[])
             bRemoveFillBits = false;
             break;
 
+        case 'w':
+            bEnableWiresharkOutput = true;
+            break;
+
         case 'h':
             printf("\nUsage: ./decoder [OPTIONS]\n\n"
                    "Options:\n"
@@ -91,6 +96,7 @@ int main(int argc, char * argv[])
                    "  -o <file> record data to binary file (can be replayed with -i option)\n"
                    "  -d <level> print debug information\n"
                    "  -f keep fill bits\n"
+                   "  -w enable wireshark output [EXPERIMENTAL]\n"
                    "  -h print this help\n\n");
             exit(EXIT_FAILURE);
             break;
@@ -195,7 +201,7 @@ int main(int argc, char * argv[])
     }
 
     // create decoder
-    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(udpSocketFd, bRemoveFillBits, logLevel);
+    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(udpSocketFd, bRemoveFillBits, logLevel, bEnableWiresharkOutput);
 
     // receive buffer
     const int RXBUF_LEN = 1024;

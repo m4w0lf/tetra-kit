@@ -35,6 +35,7 @@ namespace Tetra {
         std::size_t size();
         std::string toHex();
         std::string toString(const int len = 0);
+        void toPackedUInt8(uint8_t * data);
 
         // TETRA specific functions
         std::string textGsm7BitDecode(const int16_t len);

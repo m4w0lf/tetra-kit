@@ -10,7 +10,8 @@ SRC = main.cc decoder.cc \
 	cmce/cmce.cc cmce/sds/sds.cc cmce/sds/lip.cc \
 	mm/mm.cc mm/mm_elements.cc mm/d_authentication.cc mm/d_mm_status.cc mm/d_otar.cc \
 	uplane/uplane.cc \
-	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc
+	mac/coding.cc mac/macdefrag.cc mac/mac.cc mac/viterbi.cc \
+	wiremsg/wiremsg.cc
 
 #SRC = 	decoder_main.cc coding.cc report.cc utils.cc viterbi.cc base64.cc \
 #	tetra_dl.cc mac.cc llc.cc mle.cc cmce.cc cmce_sds.cc cmce_sds_lip.cc sndcp.cc \

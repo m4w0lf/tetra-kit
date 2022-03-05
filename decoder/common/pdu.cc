@@ -188,6 +188,34 @@ void Pdu::print(const int len)
 }
 
 /**
+ * @brief Copy vector to packed uint8_t array
+ *
+ */
+
+void Pdu::toPackedUInt8(uint8_t * data)
+{
+    size_t idx;
+    uint8_t curByte = 0;
+
+    for (idx = 0; idx < m_vec.size(); idx++)
+    {
+        uint8_t bitnum = (uint8_t)(7 - (idx % 8));
+
+        curByte |= (m_vec[idx] << bitnum);
+
+        if((idx % 8) == 7)
+        {
+            *data++ = curByte;
+            curByte = 0;
+        }
+    }
+
+    // we have a non-modulo-8 bitcount
+    if (idx % 8)
+        *data++ = curByte;
+}
+
+/**
  * @brief
  *
  */

@@ -43,7 +43,7 @@ std::string Tetra::macLogicalChannelName(MacLogicalChannel channel)
         ret = "TCH_S";
         break;
 
-    case unkown:
+    case unknown:
         ret = "unknown";
         break;
 

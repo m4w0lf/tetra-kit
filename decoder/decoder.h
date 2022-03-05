@@ -25,6 +25,7 @@
 #include "cmce/sds/sds.h"
 #include "mm/mm.h"
 #include "sndcp/sndcp.h"
+#include "wiremsg/wiremsg.h"
 
 /**
  * @defgroup tetra_common TETRA downlink decoder
@@ -34,7 +35,7 @@
  */
 
 namespace Tetra {
-    
+
     /*
      * TETRA decoder for pi/4-DQPSK modulation
      *
@@ -60,12 +61,12 @@ namespace Tetra {
      *   - 2021-08-01  LT  0.1  Splited layers into classes
      *
      */
-    
+
     class TetraDecoder {
     public:
-        TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel);
+        TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel, bool bEnableWiresharkOutput);
         ~TetraDecoder();
-        
+
         void printData();
         void processFrame();
         void resetSynchronizer();
@@ -77,7 +78,7 @@ namespace Tetra {
         const std::vector<uint8_t> NORMAL_TRAINING_SEQ_2       = {0,1,1,1,1,0,1,0,0,1,0,0,0,0,1,1,0,1,1,1,1,0}; // p1..p22
         const std::vector<uint8_t> NORMAL_TRAINING_SEQ_3_BEGIN = {0,0,0,1,1,0,1,0,1,1,0,1};                     // q11..q22
         const std::vector<uint8_t> NORMAL_TRAINING_SEQ_3_END   = {1,0,1,1,0,1,1,1,0,0};                         // q1..q10
-        
+
         // 9.4.4.3.4 Synchronisation training sequence
         const std::vector<uint8_t> SYNC_TRAINING_SEQ = {1,1,0,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,0,1,0,0,1,1,1,0,0,0,0,0,1,1,0,0,1,1,1}; // y1..y38
 
@@ -86,9 +87,9 @@ namespace Tetra {
         int m_socketFd = 0;                                                     ///< UDP socket to write to
 
         Log    * m_log;                                                         ///< LOG to stdout
-        Report * m_report;                                                      ///< JSON UDP reporting        
+        Report * m_report;                                                      ///< JSON UDP reporting
         TetraCell * m_tetraCell;                                                ///< Tetra cell informations and timer
-        
+
         Mac    * m_mac;                                                         ///< MAC layer
         UPlane * m_uPlane;                                                      ///< U-Plane layer
         Llc    * m_llc;                                                         ///< LLC layer
@@ -97,6 +98,7 @@ namespace Tetra {
         Mm     * m_mm;                                                          ///< MM layer
         Sds    * m_sds;                                                         ///< CMCE/SDS sub layer
         Sndcp  * m_sndcp;                                                       ///< SNDCP layer
+        WireMsg * m_wireMsg;                                                    ///< Wireshark output
 
         bool m_bIsSynchronized;                                                 ///< True is program is synchronized with burst
         uint64_t m_syncBitCounter;                                              ///< Synchronization bits counter

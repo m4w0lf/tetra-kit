@@ -7,7 +7,7 @@ using namespace Tetra;
  *
  */
 
-TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel)
+TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel, bool bEnableWiresharkOutput)
 {
     m_socketFd = socketFd;
 
@@ -23,7 +23,16 @@ TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel lo
     m_mle    = new Mle(m_log, m_report, m_cmce, m_mm, m_sndcp);
     m_llc    = new Llc(m_log, m_report, m_mle);
     m_uPlane = new UPlane(m_log, m_report);
-    m_mac    = new Mac(m_log, m_report, m_tetraCell, m_uPlane, m_llc, m_mle, bRemoveFillBits);
+    if (bEnableWiresharkOutput)
+    {
+        m_wireMsg = new WireMsg();
+    }
+    else
+    {
+        m_wireMsg = NULL;
+    }
+
+    m_mac    = new Mac(m_log, m_report, m_tetraCell, m_uPlane, m_llc, m_mle, m_wireMsg, bRemoveFillBits);
 
     m_frame.clear();
 
@@ -49,6 +58,7 @@ TetraDecoder::~TetraDecoder()
     delete m_tetraCell;
     delete m_log;
     delete m_report;
+    delete m_wireMsg;
 }
 
 /**

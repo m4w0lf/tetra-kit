@@ -18,16 +18,16 @@ namespace Tetra {
      */
 
     enum MacLogicalChannel {                                                    // CP only
-        AACH   = 0,
-        BLCH   = 1,
-        BNCH   = 2,
-        BSCH   = 3,
-        SCH_F  = 4,
-        SCH_HD = 5,
-        STCH   = 6,
-        TCH_S  = 7,
-        TCH    = 8,
-        unkown = 9
+        AACH    = 0,
+        BLCH    = 1,
+        BNCH    = 2,
+        BSCH    = 3,
+        SCH_F   = 4,
+        SCH_HD  = 5,
+        STCH    = 6,
+        TCH_S   = 7,
+        TCH     = 8,
+        unknown = 9
     };
 
     /**

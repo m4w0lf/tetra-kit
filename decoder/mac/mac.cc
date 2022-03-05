@@ -27,13 +27,14 @@ static int curBurstType;
  *
  */
 
-Mac::Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, bool bRemoveFillBits) : Layer(log, report)
+Mac::Mac(Log * log, Report * report, TetraCell * tetraCell, UPlane * uPlane, Llc * llc, Mle * mle, WireMsg * wMsg, bool bRemoveFillBits) : Layer(log, report)
 {
     m_tetraCell = tetraCell;
 
-    m_uPlane = uPlane;
-    m_llc = llc;
-    m_mle = mle;
+    m_uPlane  = uPlane;
+    m_llc     = llc;
+    m_mle     = mle;
+    m_wireMsg = wMsg;
 
     m_bRemoveFillBits = bRemoveFillBits;
 
@@ -338,7 +339,7 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
     }
     else
     {
-        // unkown burst type
+        // unknown burst type
         return;
     }
 }
@@ -358,21 +359,24 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
  *    TCH_S
  *    TCH              MAC-TRAFFIC
  *
- *   AACH   = 0,
- *   BLCH   = 1,
- *   BNCH   = 2,
- *   BSCH   = 3,
- *   SCH_F  = 4,
- *   SCH_HD = 5,
- *   STCH   = 6,
- *   TCH_S  = 7,
- *   TCH    = 8,
- *   unkown = 9
+ *   AACH    = 0,
+ *   BLCH    = 1,
+ *   BNCH    = 2,
+ *   BSCH    = 3,
+ *   SCH_F   = 4,
+ *   SCH_HD  = 5,
+ *   STCH    = 6,
+ *   TCH_S   = 7,
+ *   TCH     = 8,
+ *   unknown = 9
  */
 
 void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s data = %s\n", "service_upper_mac", macLogicalChannelName(macLogicalChannel).c_str(), data.toString().c_str());
+
+    // send data to Wireshark if available
+    if (m_wireMsg) m_wireMsg->sendMsg(macLogicalChannel, m_tetraTime, data);
 
     static const int32_t MIN_MAC_RESOURCE_SIZE = 40;                            // NULL_PDU size is 16, but valid MAC-Resource must be longer than 40 bits
 
