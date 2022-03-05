@@ -197,7 +197,6 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
         }
     }
 
-    //printf("BURST %d\n", burstType);
     m_secondSlotStolenFlag = 0;                                                 // stolen flag lifetime is NDB_SF burst life only
 
     std::vector<uint8_t> bkn1;                                                  // busrt block BKN1
@@ -208,7 +207,7 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
     {
         // BKN1 block - BSCH - SB seems to be sent only on FN=18 thus BKN1 contains only BSCH
         bkn1 = vectorExtract(data, 94,  120);
-        bkn1 = descramble(bkn1, 120, 0x0003);                                   // descramble with predifined code 0x0003
+        bkn1 = descramble(bkn1, 120, 0x0003);                                   // descramble with predefined code 0x0003
         bkn1 = deinterleave(bkn1, 120, 11);                                     // deinterleave 120, 11
         bkn1 = depuncture23(bkn1, 120);                                         // depuncture with 2/3 rate 120 bits -> 4 * 80 bits before Viterbi decoding
         bkn1 = viterbiDecode1614(bkn1);                                         // Viterbi decode - see 8.3.1.2  (K1 + 16, K1) block code with K1 = 60
@@ -368,135 +367,186 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
  *   STCH   = 6,
  *   TCH_S  = 7,
  *   TCH    = 8,
- *   unkown = 9 *
+ *   unkown = 9
  */
 
 void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - mac_channel = %s data = %s\n", "service_upper_mac", macLogicalChannelName(macLogicalChannel).c_str(), data.toString().c_str());
 
-    std::string txt = "?";
+    static const int32_t MIN_MAC_RESOURCE_SIZE = 40;                            // NULL_PDU size is 16, but valid MAC-Resource must be longer than 40 bits
+
+    Pdu pdu(data);
+
+    std::string txt;
     uint8_t pduType;
     uint8_t subType;
     uint8_t broadcastType;
-    Pdu tmSdu;
+
     bool bSendTmSduToLlc = true;
     bool fragmentedPacketFlag  = false;
 
+    Pdu tmSdu;
+
+    bool dissociatePduFlag = false;
+    int32_t pduSizeInMac = 0;                                                   // pdu size in MAC frame to handle MAC decomposition
+
     m_macState.logicalChannel = macLogicalChannel;
 
-    switch (macLogicalChannel)
+    int pduCount = 0;                                                           // number of pdu dissociated
+    do
     {
-    case AACH:
-        pduProcessAach(data);                                                   // ACCESS-ASSIGN see 21.4.7 - stop after processing
-        txt = "  aach";
-        break;
+        txt = "?";
 
-    case BSCH:                                                                  // SYNC PDU - stop after processing
-        txt = "  bsch";
-        tmSdu = pduProcessSync(data);
-        break;
+        dissociatePduFlag = false;
 
-    case TCH_S:                                                                 // (TMD) MAC-TRAFFIC PDU full slot
-        printf("TCH_S       : TN/FN/MN = %2d/%2d/%2d    dl_usage_marker=%d, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, m_macState.downlinkUsageMarker, m_usageMarkerEncryptionMode[m_macState.downlinkUsageMarker]);
-        txt = "  tch_s";
-        m_uPlane->service(data, TCH_S, m_tetraTime, m_macAddress, m_macState, m_usageMarkerEncryptionMode[(uint8_t)m_macState.downlinkUsageMarker]);
-        break;
+        bSendTmSduToLlc = true;
 
-    case TCH:                                                                   // TCH half-slot TODO not taken into account for now
-        printf("TCH         : TN/FN/MN = %2d/%2d/%2d    dl_usage_marker=%d, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, m_macState.downlinkUsageMarker, m_usageMarkerEncryptionMode[m_macState.downlinkUsageMarker]);
-        txt = "  tch";
-        m_uPlane->service(data, TCH, m_tetraTime, m_macAddress, m_macState, m_usageMarkerEncryptionMode[(uint8_t)m_macState.downlinkUsageMarker]);
-        break;
-
-    case STCH:                                                                  // TODO stolen channel for signalling if MAC state in traffic mode -> user signalling, otherwise, signalling 19.2.4
-    case BNCH:
-    case SCH_F:
-    case SCH_HD:
-        // we are not in traffic mode
-        pduType = data.getValue(0, 2);
-
-        switch (pduType)
+        switch (macLogicalChannel)
         {
-        case 0b00:                                                              // MAC PDU structure for downlink (TMA) MAC-RESOURCE
-            txt = "MAC-RESOURCE";
-            tmSdu = pduProcessResource(data, macLogicalChannel, &fragmentedPacketFlag);
-
-            if (fragmentedPacketFlag)
-            {
-                // tmSdu to be hold until MAC-END received
-                bSendTmSduToLlc = false;
-            }
+        case AACH:
+            pduProcessAach(pdu);                                                // ACCESS-ASSIGN see 21.4.7 - stop after processing
+            txt = "  aach";
             break;
 
-        case 0b01:                                                              // MAC-FRAG or MAC-END (TMA)
-            subType = data.getValue(2, 1);
-            if (subType == 0)                                                   // MAC-FRAG 21.4.3.2
-            {
-                txt = "MAC-FRAG";
-                pduProcessMacFrag(data);                                        // no PDU returned // max 120 or 240 bits depending on channel
-                bSendTmSduToLlc = false;
-            }
-            else                                                                // MAC-END 21.4.3.3
-            {
-                txt = "MAC-END";
-                tmSdu = pduProcessMacEnd(data);
-                bSendTmSduToLlc = true;
-            }
+        case BSCH:                                                              // SYNC PDU - stop after processing
+            txt = "  bsch";
+            tmSdu = pduProcessSync(pdu);
             break;
 
-        case 0b10:                                                              // MAC PDU structure for broadcast (TMB)  SYSINFO/ACCESS_DEFINE 21.4.4
-            broadcastType = data.getValue(2, 2);
-            switch (broadcastType)
+        case TCH_S:                                                             // (TMD) MAC-TRAFFIC PDU full slot
+            m_log->print(LogLevel::NONE, "TCH_S       : TN/FN/MN = %2d/%2d/%2d    dl_usage_marker=%d, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, m_macState.downlinkUsageMarker, m_usageMarkerEncryptionMode[m_macState.downlinkUsageMarker]);
+            txt = "  tch_s";
+            m_uPlane->service(pdu, TCH_S, m_tetraTime, m_macAddress, m_macState, m_usageMarkerEncryptionMode[(uint8_t)m_macState.downlinkUsageMarker]);
+            break;
+
+        case TCH:                                                               // TCH half-slot TODO not taken into account for now
+            m_log->print(LogLevel::NONE, "TCH         : TN/FN/MN = %2d/%2d/%2d    dl_usage_marker=%d, encr=%u\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, m_macState.downlinkUsageMarker, m_usageMarkerEncryptionMode[m_macState.downlinkUsageMarker]);
+            txt = "  tch";
+            m_uPlane->service(pdu, TCH, m_tetraTime, m_macAddress, m_macState, m_usageMarkerEncryptionMode[(uint8_t)m_macState.downlinkUsageMarker]);
+            break;
+
+        case STCH:                                                              // TODO stolen channel for signalling if MAC state in traffic mode -> user signalling, otherwise, signalling 19.2.4
+        case BNCH:
+        case SCH_F:
+        case SCH_HD:
+            // we are not in traffic mode
+            pduType = pdu.getValue(0, 2);
+
+            switch (pduType)
             {
-            case 0b00:                                                          // SYSINFO see 21.4.4.1 / BNCH on SCH_HD or or STCH
-                txt = "SYSINFO";
-                tmSdu = pduProcessSysinfo(data);                                // TM-SDU (MLE data)
+            case 0b00:                                                          // MAC PDU structure for downlink MAC-RESOURCE (TMA)
+                txt = "MAC-RESOURCE";
+                tmSdu = pduProcessResource(pdu, macLogicalChannel, &fragmentedPacketFlag, &pduSizeInMac);
+                if (fragmentedPacketFlag)
+                {
+                    // tmSdu to be hold until MAC-END received
+                    bSendTmSduToLlc = false;
+                }
+                else if (pduSizeInMac > 0)                                      // apply disassociation if it is neither NULL PDU nor MAC-Frag
+                {
+                    dissociatePduFlag = true;
+                }
                 break;
 
-            case 0b01:                                                          // ACCESS-DEFINE see 21.4.4.3, no sdu
-                txt = "ACCESS-DEFINE";
+            case 0b01:                                                          // MAC-FRAG or MAC-END (TMA)
+                subType = pdu.getValue(2, 1);
+                if (subType == 0)                                               // MAC-FRAG 21.4.3.2
+                {
+                    txt = "MAC-FRAG";
+                    pduProcessMacFrag(pdu);                                     // no PDU returned // max 120 or 240 bits depending on channel
+                    bSendTmSduToLlc = false;
+                }
+                else                                                            // MAC-END 21.4.3.3
+                {
+                    txt = "MAC-END";
+                    tmSdu = pduProcessMacEnd(pdu);
+                    bSendTmSduToLlc = true;
+                }
+                break;
+
+            case 0b10:                                                          // MAC PDU structure for broadcast SYSINFO/ACCESS_DEFINE (TMB) 21.4.4
+                broadcastType = pdu.getValue(2, 2);
+                switch (broadcastType)
+                {
+                case 0b00:                                                      // SYSINFO see 21.4.4.1 / BNCH on SCH_HD or or STCH
+                    txt = "SYSINFO";
+                    tmSdu = pduProcessSysinfo(pdu, &pduSizeInMac);              // TM-SDU (MLE data)
+                    break;
+
+                case 0b01:                                                      // ACCESS-DEFINE see 21.4.4.3, no sdu
+                    txt = "ACCESS-DEFINE";
+                    pduProcessAccessDefine(pdu, &pduSizeInMac);                 // 21.4.4.3 - no sdu
+                    break;
+
+                default:
+                    txt = "RESERVED";
+                }
+                break;
+
+            case 0b11:                                                          // MAC-D-BLOCK (TMA)
+                subType = pdu.getValue(2, 1);
+
+                if ((macLogicalChannel != STCH) && (macLogicalChannel != SCH_HD))
+                {
+                    txt = "MAC-D-BLCK";                                         // 21.4.1 not sent on SCH/HD or STCH
+                    tmSdu = pduProcessDBlock(pdu, &pduSizeInMac);
+                    m_log->print(LogLevel::NONE, "%-10s : TN/FN/MN = %2d/%2d/%2d\n", txt.c_str(), m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn);
+                }
+                else
+                {
+                    txt = "MAC-ERROR";
+                    m_log->print(LogLevel::NONE, "MAC error   : TN/FN/MN = %2d/%2d/%2d    supplementary block on channel %d\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, macLogicalChannel);
+                }
                 break;
 
             default:
-                txt = "RESERVED";
-            }
-            break;
-
-        case 0b11:                                                              // MAC-D-BLOCK (TMA)
-            subType = data.getValue(2, 1);
-
-            if ((macLogicalChannel != STCH) && (macLogicalChannel != SCH_HD))
-            {
-                txt = "MAC-D-BLCK";                                             // 21.4.1 not sent on SCH/HD or STCH
-                tmSdu = pduProcessDBlock(data);
-            }
-            else
-            {
-                txt = "MAC-ERROR";
-                printf("MAC error   : TN/FN/MN = %2d/%2d/%2d    supplementary block on channel %d\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, macLogicalChannel);
+                txt = "pdu";
+                break;
             }
             break;
 
         default:
-            txt = "pdu";
+            txt = "rev";
             break;
         }
-        break;
 
-    default:
-        txt = "rev";
-        break;
-    }
+        pduCount++;                                                             // for the protection loop
 
-    //printf("%-10s : TN/FN/MN = %2d/%2d/%2d    dl_usage_marker=%d\n", txt.c_str(), m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, m_macState.downlink_usage_marker);
+#if 0
+        // DEBUG informations only
+        if (dissociatePduFlag)
+        {
+            if (pduCount > 1)
+            {
+                if (pduSizeInMac > -1)
+                {
+                    printf("*** %-20s  ", txt.c_str());
+                    printf("diss %d %d", pduCount, (int32_t)tmSdu.size()); //, pdu.toString().c_str());
+                    printf(" %d - %d = %d\n", (int32_t)pdu.size(), pduSizeInMac, (int32_t)pdu.size() - pduSizeInMac);
+                }
+            }
+        }
+#endif
 
-    if ((!tmSdu.isEmpty()) && bSendTmSduToLlc)
-    {
         // service LLC
-        m_llc->service(tmSdu, macLogicalChannel, m_tetraTime, m_macAddress);
-    }
+        if ((!tmSdu.isEmpty()) && bSendTmSduToLlc)
+        {
+            // service LLC
+            m_llc->service(tmSdu, macLogicalChannel, m_tetraTime, m_macAddress);
+        }
 
+        // Check the remaining size for disassociation
+        if (((int32_t)pdu.size() - pduSizeInMac) < MIN_MAC_RESOURCE_SIZE)
+        {
+            break;                                                              // not enough remaining bits to decode
+        }
+        else if (dissociatePduFlag)
+        {
+            pdu = Pdu(pdu, pduSizeInMac);                                       // shift the packet
+        }
+
+    } while (bSendTmSduToLlc && dissociatePduFlag && (pduCount < 32));          // pduCount for loop protection
 }
 
 /**
@@ -504,6 +554,7 @@ void Mac::serviceUpperMac(Pdu data, MacLogicalChannel macLogicalChannel)
  *
  *        WARNING: length is in octet, not in bits
  *
+ *        NOTE:    0 length is reserved, but we use it here to indicate also invalid result
  */
 
 int32_t Mac::decodeLength(uint32_t val)
@@ -599,16 +650,6 @@ void Mac::pduProcessAach(Pdu pdu)
             }
         }
     }
-
-    //if(m_macState.downlinkUsage == TRAFFIC)
-    /*printf("AACH        : TN/FN/MN = %2d/%2d/%2d                        burst=%d  marker=%2u   field1 = %02u  field2 = %2u\n",
-           m_tetraTime.tn,
-           m_tetraTime.fn,
-           m_tetraTime.mn,
-           curBurstType,
-           m_macState.downlinkUsageMarker,
-           field1,
-           field2);*/
 }
 
 /**
@@ -623,12 +664,6 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 
     if (m_bRemoveFillBits)
     {
-        if (m_log->getLevel() == LogLevel::VERYHIGH)
-        {
-            printf(" ------- mac_remove_fill_bits BEFORE -- %u bits\n", (uint32_t)ret.size());
-            ret.print();
-        }
-
         if (ret.at(ret.size() - 1) == 1)
         {
             ret.resize(ret.size() - 1);                                         // 23.4.3.2 remove last 1
@@ -641,13 +676,6 @@ Pdu Mac::removeFillBits(const Pdu pdu)
             }
             ret.resize(ret.size() - 1);                                         // 23.4.3.2 then remove last 1
         }
-
-        if (m_log->getLevel() == LogLevel::VERYHIGH)
-        {
-            printf(" ------- mac_remove_fill_bits AFTER --- %u bits\n", (uint32_t)ret.size());
-            ret.print();
-        }
-
     }
 
     return ret;
@@ -655,11 +683,14 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 
 /**
  * @brief Process MAC-RESOURCE and return TM-SDU (to LLC or MAC-FRAG) - see 21.4.3.1 table 21.55
+ *        Process PDU dissociation (see 23.4.3.3)
  *
  * Maximum length (table 21.56):
  *    SCH/F   239 bits
  *    SCH/HD  95 bits
  *    STCH    95 bits
+ *
+ * When we receive a NULL PDU, all other fields must be discarded by the MS
  *
  * Note that when encryption is used:
  *   - the channel allocation element (when present) shall be encrypted
@@ -670,14 +701,30 @@ Pdu Mac::removeFillBits(const Pdu pdu)
  *       - event label and usage marker should not be encrypted (see EN 300 392-7 clause 4.2.6)
  *
  */
+// MAC-RESOURCE 00 00000 000010 000 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
-Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bool * fragmentedPacketFlag)
+Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bool * fragmentedPacketFlag, int32_t * pduSizeInMac)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_resource", mac_pdu.toString().c_str());
 
     Pdu pdu = mac_pdu;
 
     *fragmentedPacketFlag = false;
+
+    *pduSizeInMac = 0;
+
+    // check if we have a NULL PDU
+    uint8_t addressType = pdu.getValue(13, 3);
+    if (addressType == 0b000)
+    {
+        // in the case of a null pdu, all other fields should be
+        // discarded by the MS (see 21.4.3.1) so stop here
+        *pduSizeInMac = -1;                                                     // null pdu flag
+
+        return Pdu();                                                           // return empty pdu
+    }
+
+    // if we reach here, we don't have a NULL PDU
 
     uint32_t pos = 2;                                                           // MAC pdu type
 
@@ -713,149 +760,148 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
     // Note that address type may be encrypted, anyway event label and usage marker
     // should not (see EN 300 392-7 clause 4.2.6)
 
-    if (m_macAddress.addressType == 0b000)                                      // NULL pdu, stop processing here
+    switch (m_macAddress.addressType)                                           // TODO see EN 300 392-1 clause 7
     {
-        return Pdu();
+    case 0b001:                                                                 // SSI
+        m_macAddress.ssi = pdu.getValue(pos, 24);
+        pos += 24;
+        break;
+
+    case 0b011:                                                                 // USSI
+        m_macAddress.ussi = pdu.getValue(pos, 24);
+        pos += 24;
+        break;
+
+    case 0b100:                                                                 // SMI
+        m_macAddress.smi = pdu.getValue(pos, 24);
+        pos += 24;
+        break;
+
+    case 0b010:                                                                 // event label
+        m_macAddress.eventLabel = pdu.getValue(pos, 10);
+        pos += 10;
+        break;
+
+    case 0b101:                                                                 // SSI + event label (event label assignment)
+        m_macAddress.ssi = pdu.getValue(pos, 24);
+        pos += 24;
+        m_macAddress.eventLabel = pdu.getValue(pos, 10);
+        pos += 10;
+        break;
+
+    case 0b110:                                                                 // SSI + usage marker (usage marker assignment)
+        m_macAddress.ssi = pdu.getValue(pos, 24);
+        pos += 24;
+        m_macAddress.usageMarker = pdu.getValue(pos, 6);
+        pos += 6;
+
+        m_usageMarkerEncryptionMode[m_macAddress.usageMarker] = m_macAddress.encryptionMode; // handle usage marker and encryption mode
+        break;
+
+    case 0b111:                                                                 // SMI + event label (event label assignment)
+        m_macAddress.smi = pdu.getValue(pos, 24);
+        pos += 24;
+        m_macAddress.eventLabel = pdu.getValue(pos, 10);
+        pos += 10;
+        break;
+    }
+
+    if (pdu.getValue(pos, 1))                                                   // power control flag
+    {
+        pos += 1 + 4;
     }
     else
     {
-        switch (m_macAddress.addressType)                                       // TODO see EN 300 392-1 clause 7
-        {
-        case 0b001:                                                             // SSI
-            m_macAddress.ssi = pdu.getValue(pos, 24);
-            pos += 24;
-            break;
+        pos += 1;
+    }
 
-        case 0b011:                                                             // USSI
-            m_macAddress.ussi = pdu.getValue(pos, 24);
-            pos += 24;
-            break;
+    if (pdu.getValue(pos, 1))                                                   // slot granting flag
+    {
+        pos += 1 + 8;
+    }
+    else
+    {
+        pos += 1;
+    }
 
-        case 0b100:                                                             // SMI
-            m_macAddress.smi = pdu.getValue(pos, 24);
-            pos += 24;
-            break;
+    uint8_t flag = pdu.getValue(pos, 1);
+    pos += 1;
+    if (flag)
+    {
+        uint8_t val;
 
-        case 0b010:                                                             // event label
-            m_macAddress.eventLabel = pdu.getValue(pos, 10);
-            pos += 10;
-            break;
-
-        case 0b101:                                                             // SSI + event label (event label assignment)
-            m_macAddress.ssi = pdu.getValue(pos, 24);
-            pos += 24;
-            m_macAddress.eventLabel = pdu.getValue(pos, 10);
-            pos += 10;
-            break;
-
-        case 0b110:                                                             // SSI + usage marker (usage marker assignment)
-            m_macAddress.ssi = pdu.getValue(pos, 24);
-            pos += 24;
-            m_macAddress.usageMarker = pdu.getValue(pos, 6);
-            pos += 6;
-
-            m_usageMarkerEncryptionMode[m_macAddress.usageMarker] = m_macAddress.encryptionMode; // handle usage marker and encryption mode
-            break;
-
-        case 0b111:                                                             // SMI + event label (event label assignment)
-            m_macAddress.smi = pdu.getValue(pos, 24);
-            pos += 24;
-            m_macAddress.eventLabel = pdu.getValue(pos, 10);
-            pos += 10;
-            break;
-        }
-
-        if (pdu.getValue(pos, 1))                                               // power control flag
-        {
-            pos += 1 + 4;
-        }
-        else
-        {
-            pos += 1;
-        }
-
-        if (pdu.getValue(pos, 1))                                               // slot granting flag
-        {
-            pos += 1 + 8;
-        }
-        else
-        {
-            pos += 1;
-        }
-
-        uint8_t flag = pdu.getValue(pos, 1);
+        // 21.5.2 channel allocation elements table 21.82 (may be encrypted)
+        pos += 2;                                                               // channel allocation type
+        pos += 4;                                                               // timeslot assigned
+        uint8_t ul_dl = pdu.getValue(pos, 2);
+        pos += 2;                                                               // up/downlink assigned
+        pos += 1;                                                               // CLCH permission
+        pos += 1;                                                               // cell change flag
+        pos += 12;                                                              // carrier number
+        flag = pdu.getValue(pos, 1);                                            // extended carrier numbering flag
         pos += 1;
         if (flag)
         {
-            uint8_t val;
+            pos += 4;                                                           // frequency band
+            pos += 2;                                                           // offset
+            pos += 3;                                                           // duplex spacing
+            pos += 1;                                                           // reverse operation
+        }
+        val = pdu.getValue(pos, 2);                                             // monitoring pattern
+        pos += 2;
+        if ((val == 0b00) && (m_tetraTime.fn == 18))                            // frame 18 conditional monitoring pattern
+        {
+            pos += 2;
+        }
 
-            // 21.5.2 channel allocation elements table 21.82 (may be encrypted)
-            pos += 2;                                                           // channel allocation type
-            pos += 4;                                                           // timeslot assigned
-            uint8_t ul_dl = pdu.getValue(pos, 2);
-            pos += 2;                                                           // up/downlink assigned
-            pos += 1;                                                           // CLCH permission
-            pos += 1;                                                           // cell change flag
-            pos += 12;                                                          // carrier number
-            flag = pdu.getValue(pos, 1);                                        // extended carrier numbering flag
+        if (ul_dl == 0)                                                         // augmented channel allocation
+        {
+            pos += 2;
+            pos += 3;
+            pos += 3;
+            pos += 3;
+            pos += 3;
+            pos += 3;
+            pos += 4;
+            pos += 5;
+            val = pdu.getValue(pos, 2);                                         // napping_sts
+            pos += 2;
+            if (val == 1)
+            {
+                pos += 11;                                                      // 21.5.2c
+            }
+            pos += 4;
+
+            flag = pdu.getValue(pos, 1);
             pos += 1;
             if (flag)
             {
-                pos += 4;                                                       // frequency band
-                pos += 2;                                                       // offset
-                pos += 3;                                                       // duplex spacing
-                pos += 1;                                                       // reverse operation
+                pos += 16;
             }
-            val = pdu.getValue(pos, 2);                                         // monitoring pattern
-            pos += 2;
-            if ((val == 0b00) && (m_tetraTime.fn == 18))                        // frame 18 conditional monitoring pattern
+
+            flag = pdu.getValue(pos, 1);
+            pos += 1;
+            if (flag)
             {
-                pos += 2;
+                pos += 16;
             }
 
-            if (ul_dl == 0)                                                     // augmented channel allocation
-            {
-                pos += 2;
-                pos += 3;
-                pos += 3;
-                pos += 3;
-                pos += 3;
-                pos += 3;
-                pos += 4;
-                pos += 5;
-                val = pdu.getValue(pos, 2);                                     // napping_sts
-                pos += 2;
-                if (val == 1)
-                {
-                    pos += 11;                                                  // 21.5.2c
-                }
-                pos += 4;
-
-                flag = pdu.getValue(pos, 1);
-                pos += 1;
-                if (flag)
-                {
-                    pos += 16;
-                }
-
-                flag = pdu.getValue(pos, 1);
-                pos += 1;
-                if (flag)
-                {
-                    pos += 16;
-                }
-
-                pos += 1;
-            }
+            pos += 1;
         }
     }
+
 
     Pdu sdu;
 
     // in case of NULL pdu, the length shall be 16 bits
-    int32_t sdu_length = decodeLength(length) * 8 - (int32_t)pos;
+    if (! (*fragmentedPacketFlag))                                              // FIXME to check
+    {
+        *pduSizeInMac = decodeLength(length) * 8;
+    }
 
-    if (sdu_length > 0)
+    int32_t sduLength = (int32_t)decodeLength(length) * 8 - (int32_t)pos;
+
+    if (sduLength > 0)
     {
         // longest recommended size for TM_SDU 1106 bits = 133 bytes (with FCS) or 137 bytes (without FCS)
         // length includes MAC PDU header + TM_SDU length
@@ -867,7 +913,7 @@ Pdu Mac::pduProcessResource(Pdu mac_pdu, MacLogicalChannel macLogicalChannel, bo
         }
         else
         {
-            sdu = Pdu(pdu, pos, sdu_length);
+            sdu = Pdu(pdu, pos, sduLength);
         }
     }
 
@@ -1001,14 +1047,16 @@ Pdu Mac::pduProcessMacEnd(Pdu mac_pdu)
 
 /**
  * @brief Process SYSINFO and return TM-SDU (MLE data) - see 21.4.4.1 table 333
+ *        note that this PDU contains fill bits to octet bound
  *
  */
 
-Pdu Mac::pduProcessSysinfo(Pdu pdu)
+Pdu Mac::pduProcessSysinfo(Pdu pdu, int32_t * pduSizeInMac)
 {
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_sysinfo", pdu.toString().c_str());
 
     Pdu sdu;
+    *pduSizeInMac = 0;
 
     static const std::size_t MIN_SIZE = 82;
 
@@ -1055,6 +1103,8 @@ Pdu Mac::pduProcessSysinfo(Pdu pdu)
         m_tetraCell->setFrequencies((int32_t)band_frequency * 100000000 + (int32_t)main_carrier * 25000 + duplex[offset], 0);
 
         sdu = Pdu(pdu, pos, 42);                                                // TM-SDU (MLE data) clause 18
+
+        *pduSizeInMac = pos + 42;                                               // PDU total size in MAC frame
     }
     else
     {
@@ -1067,17 +1117,19 @@ Pdu Mac::pduProcessSysinfo(Pdu pdu)
 
 /**
  * @brief Process MAC-D-BLCK - see 21.4.3.4 table 21.61
+ *        Length is defined implicitly to 268 bits (table 21.62)
  *
  */
 
-Pdu Mac::pduProcessDBlock(Pdu mac_pdu)
+Pdu Mac::pduProcessDBlock(Pdu mac_pdu, int32_t * pduSizeInMac)
 {
     m_log->print(LogLevel::HIGH,"DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_d_block", mac_pdu.toString().c_str());
 
     Pdu pdu = mac_pdu;
     Pdu sdu;
 
-    static const std::size_t MIN_SIZE = 218;
+    static const std::size_t MIN_SIZE = 268;                                    // size is implicit tables 21.62 and 21.63 (18 bits header + 250 SDU)
+    *pduSizeInMac = 0;
 
     if (pdu.size() >= MIN_SIZE)
     {
@@ -1104,6 +1156,7 @@ Pdu Mac::pduProcessDBlock(Pdu mac_pdu)
         }
 
         sdu = Pdu(pdu, pos);
+        *pduSizeInMac = MIN_SIZE;
     }
     else
     {
@@ -1154,7 +1207,7 @@ Pdu Mac::pduProcessSync(Pdu pdu)
 
         if ((m_tetraTime.fn == 18) && (((m_tetraTime.mn + m_tetraTime.tn) % 4) == 3))
         {
-            printf("BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",
+            m_log->print(LogLevel::NONE, "BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",
                    m_tetraTime.tn,
                    m_tetraTime.fn,
                    m_tetraTime.mn,
@@ -1174,4 +1227,42 @@ Pdu Mac::pduProcessSync(Pdu pdu)
     }
 
     return sdu;
+}
+
+/**
+ * @brief Process ACCESS-DEFINE 21.4.4.3 table 21.74
+ *
+ */
+
+void Mac::pduProcessAccessDefine(Pdu mac_pdu, int32_t * pduSizeInMac)
+{
+    m_log->print(LogLevel::HIGH,"DEBUG ::%-44s - pdu = %s\n", "mac_pdu_process_access_define", mac_pdu.toString().c_str());
+
+    Pdu pdu = mac_pdu;
+    Pdu sdu;
+
+    uint32_t pos = 2;
+    pos += 2;
+    pos += 1;                                                                   // applies to common or designed channel
+    pos += 2;                                                                   // access code
+    pos += 4;                                                                   // randomize status
+    pos += 4;                                                                   // wait time
+    pos += 4;                                                                   // number of random transmissions to uplink
+    pos += 1;                                                                   // frame length factor
+    pos += 4;                                                                   // timeslot pointer
+    pos += 3;                                                                   // pdu priority
+
+    uint8_t flag = pdu.getValue(pos, 2);                                        // optional field flag
+    pos += 1;
+    if (flag == 0b01)
+    {
+        pos += 16;                                                              // subscriber class bit map - see clause 18
+    }
+    else if (flag == 0b10)
+    {
+        pos += 24;                                                              // GSSI
+    }
+    pos += 3;                                                                   // filler bits (always here)
+
+    *pduSizeInMac = pos;
 }

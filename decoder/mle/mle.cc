@@ -100,9 +100,9 @@ void Mle::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
         }
     }
 
-    if (bPrintInfos || (m_log->getLevel() > LogLevel::LOW))
+    if (bPrintInfos)
     {
-        printf("service_mle : TN/FN/MN = %2u/%2u/%2u  %-20s  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), infos.c_str());
+        m_log->print(LogLevel::LOW, "service_mle : TN/FN/MN = %2u/%2u/%2u  %-20s  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str(), infos.c_str());
     }
 }
 
@@ -160,7 +160,7 @@ void Mle::serviceMleSubsystem(Pdu pdu, MacLogicalChannel macLogicalChannel)
         break;
     }
 
-    printf("serv_mle_sub: TN/FN/MN = %2u/%2u/%2u  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str());
+    m_log->print(LogLevel::LOW, "serv_mle_sub: TN/FN/MN = %2u/%2u/%2u  %-20s\n", m_tetraTime.tn, m_tetraTime.fn, m_tetraTime.mn, txt.c_str());
 }
 
 /**

@@ -59,13 +59,14 @@ namespace Tetra {
 
         void serviceUpperMac(const Pdu data, MacLogicalChannel macLogicalChannel);
 
-        Pdu  pduProcessSync(const Pdu pdu);                                                                       // process SYNC
-        void pduProcessAach(const Pdu data);                                                                      // process ACCESS-ASSIGN - no SDU
-        Pdu  pduProcessResource(const Pdu pdu, MacLogicalChannel macLogicalChannel, bool * fragmentedPacketFlag); // process MAC-RESOURCE
-        Pdu  pduProcessSysinfo(const Pdu pdu);                                                                    // process SYSINFO
-        void pduProcessMacFrag(const Pdu pdu);                                                                    // process MAC-FRAG
-        Pdu  pduProcessMacEnd(const Pdu pdu);                                                                     // process MAC-END
-        Pdu  pduProcessDBlock(const Pdu pdu);                                                                     // process MAC-D-BLCK
+        Pdu  pduProcessSync(const Pdu pdu);                                                                                               // process SYNC
+        void pduProcessAach(const Pdu data);                                                                                              // process ACCESS-ASSIGN - no SDU
+        Pdu  pduProcessResource(const Pdu pdu, MacLogicalChannel macLogicalChannel, bool * fragmentedPacketFlag, int32_t * pduSizeInMac); // process MAC-RESOURCE
+        Pdu  pduProcessSysinfo(const Pdu pdu, int32_t * pduSizeInMac);                                                                    // process SYSINFO
+        void pduProcessMacFrag(const Pdu pdu);                                                                                            // process MAC-FRAG
+        Pdu  pduProcessMacEnd(const Pdu pdu);                                                                                             // process MAC-END
+        Pdu  pduProcessDBlock(const Pdu pdu, int32_t * pduSizeInMac);                                                                     // process MAC-D-BLCK
+        void pduProcessAccessDefine(const Pdu pdu, int32_t * pduSizeInMac);                                                               // process ACCESS-DEFINE - no SDU
     };
 
 };

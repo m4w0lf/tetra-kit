@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
     char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
     int programMode = STANDARD_MODE;
-    int debugLevel = 0;
+    int debugLevel = 1;
     bool bRemoveFillBits = true;
 
     int option;
