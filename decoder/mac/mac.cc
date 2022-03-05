@@ -173,7 +173,6 @@ std::string Mac::burstName(int val)
  * Notes:
  *   - AACH must be processed first to get traffic or signalling mode
  *   - Fill bit deletion to be tested (see 23.4.3.2)
- *   - TODO PDU dissociation (see 23.4.3.3)
  *
  */
 
@@ -346,8 +345,8 @@ void Mac::serviceLowerMac(std::vector<uint8_t> data, int burstType)
 
 /**
  * @brief Process data in logical channel from lower mac
- *
- * See 23.2.2 MAC PDU mapping on logical channels
+ *        - MAC PDU mapping on logical channels (see 23.2.2)
+ *        - MAC PDU dissociation (see 23.4.3.3)
  *
  *    AACH             ACCESS-ASSIGN
  *    BSCH             SYNC
@@ -687,7 +686,6 @@ Pdu Mac::removeFillBits(const Pdu pdu)
 
 /**
  * @brief Process MAC-RESOURCE and return TM-SDU (to LLC or MAC-FRAG) - see 21.4.3.1 table 21.55
- *        Process PDU dissociation (see 23.4.3.3)
  *
  * Maximum length (table 21.56):
  *    SCH/F   239 bits

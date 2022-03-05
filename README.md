@@ -32,8 +32,8 @@ News
 ====
 v1.1
 ----
-- MAC resource disassembly has been added
-- Wireshark output capture is available on `localhost:4729` with filter `gsmtap` or similar (use `decoder -w`)
+- MAC PDU dissociation has been added - (see issue #36 - Thanks @l1412045)
+- Wireshark output is available on `localhost:4729` with filter `gsmtap` (when using `decoder` with option `-w`)
 
 Workflow
 ========
