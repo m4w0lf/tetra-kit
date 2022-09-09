@@ -7,6 +7,7 @@ enum ProgramMode {
     STANDARD_MODE         = 0,
     READ_FROM_BINARY_FILE = 1,
     SAVE_TO_BINARY_FILE   = 2,
+	RX_PACKED             = 4,
 };
 
 /** @brief Interrupt flag */
@@ -53,7 +54,7 @@ int main(int argc, char * argv[])
     bool bEnableWiresharkOutput = false;
 
     int option;
-    while ((option = getopt(argc, argv, "hwr:t:i:o:d:f")) != -1)
+    while ((option = getopt(argc, argv, "hPwr:t:i:o:d:f")) != -1)
     {
         switch (option)
         {
@@ -65,6 +66,9 @@ int main(int argc, char * argv[])
             udpPortTx = atoi(optarg);
             break;
 
+        case 'P':
+        	programMode |= RX_PACKED;
+        	break;
         case 'i':
             strncpy(optFilenameInput, optarg, FILENAME_LEN - 1);
             programMode |= READ_FROM_BINARY_FILE;
@@ -97,6 +101,7 @@ int main(int argc, char * argv[])
                    "  -d <level> print debug information\n"
                    "  -f keep fill bits\n"
                    "  -w enable wireshark output [EXPERIMENTAL]\n"
+            	   "  -P rx data is packed (1 Byte = 8Bits)\n"
                    "  -h print this help\n\n");
             exit(EXIT_FAILURE);
             break;
@@ -235,7 +240,17 @@ int main(int argc, char * argv[])
         // bytes must be pushed one at a time into decoder
         for (int cnt = 0; cnt < bytesRead; cnt++)
         {
-            decoder->rxSymbol(rxBuf[cnt]);
+        	if(programMode & RX_PACKED)
+        	{
+        		for(uint8_t i = 0; i <= 7; i++)
+        	    {
+        			decoder->rxSymbol( ( rxBuf[cnt] >> i ) & 0x01);
+        		}
+        	}
+        	else
+        	{
+        		decoder->rxSymbol(rxBuf[cnt]);
+        	}
         }
     }
 
