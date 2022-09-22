@@ -524,11 +524,20 @@ void Sds::parseSimpleTextMessaging(Pdu pdu, const uint16_t len)
     m_log->print(LogLevel::HIGH, "DEBUG ::%-44s - len = %u pdu = %s\n", "cmce_sds_parse_simple_text_messaging", len, pdu.toString().c_str());
 
     uint32_t pos = 8;                                                           // protocol id
-    pos += 1;                                                                   // fill bit (should be 0) FIXME or timestamp 29.5.3.3 ?
 
+    uint8_t timestamp_used = pdu.getValue(pos, 1);
+    pos += 1;                                                                   // fill bit - (should be 0) - see 29.5.2.3
+																				// and if in SDS-TL this is the timestamp present bit - see 29.5.3.3
     uint8_t textCodingScheme = pdu.getValue(pos, 7);
     pos += 7;
     m_report->add("text coding scheme", textCodingScheme);
+
+    if(timestamp_used)
+    {
+    	uint32_t timestamp = pdu.getValue(pos, 24);								// Todo: decode timestamp
+    	pos += 24;
+    	m_report->add("timestamp", timestamp);
+    }
 
     std::string txt = "";
     int32_t sduLength = (int32_t)len - (int32_t)pos;
