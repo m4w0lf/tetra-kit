@@ -192,8 +192,35 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
         pos += 1;
         if (pFlag)
         {
-            m_report->add("tetra network time", pdu.getValue(pos, 48));
-            pos += 48;
+        	std::string txt = "";
+        	std::stringstream tt;
+        	//m_report->add("tetra network time", pdu.getValue(pos, 48));
+        	uint32_t utctime = pdu.getValue(pos, 24) * 2;
+
+        	uint8_t sec = utctime % 60;
+        	utctime = utctime / 60;
+
+        	uint8_t min = utctime % 60;
+        	utctime = utctime / 60;
+
+        	uint8_t hour = utctime % 24;
+
+        	uint16_t day = utctime / 24;
+
+        	char buf[13];
+        	snprintf(buf, sizeof(buf), "%0.3u %0.2u:%0.2u:%0.2u",day,hour,min,sec);
+// Todo: use time !
+        	txt = buf;
+        	m_report->add("tetra network time", txt);
+        	pos += 24;
+        	uint8_t sign = pdu.getValue(pos, 1);
+        	pos += 1;
+        	uint8_t looffset = pdu.getValue(pos,6);
+        	pos += 6;
+        	uint32_t year = 2000 + pdu.getValue(pos, 6);
+        	pos += 6;
+
+            pos += 11; // reserved
         }
 
         pFlag = pdu.getValue(pos, 1);
