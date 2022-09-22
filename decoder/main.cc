@@ -7,7 +7,7 @@ enum ProgramMode {
     STANDARD_MODE         = 0,
     READ_FROM_BINARY_FILE = 1,
     SAVE_TO_BINARY_FILE   = 2,
-	RX_PACKED             = 4,
+    RX_PACKED             = 4,
 };
 
 /** @brief Interrupt flag */
@@ -67,8 +67,8 @@ int main(int argc, char * argv[])
             break;
 
         case 'P':
-        	programMode |= RX_PACKED;
-        	break;
+            programMode |= RX_PACKED;
+            break;
         case 'i':
             strncpy(optFilenameInput, optarg, FILENAME_LEN - 1);
             programMode |= READ_FROM_BINARY_FILE;
@@ -101,7 +101,7 @@ int main(int argc, char * argv[])
                    "  -d <level> print debug information\n"
                    "  -f keep fill bits\n"
                    "  -w enable wireshark output [EXPERIMENTAL]\n"
-            	   "  -P rx data is packed (1 Byte = 8Bits)\n"
+                   "  -P rx data is packed (1 Byte = 8Bits)\n"
                    "  -h print this help\n\n");
             exit(EXIT_FAILURE);
             break;
@@ -240,11 +240,11 @@ int main(int argc, char * argv[])
         // bytes must be pushed one at a time into decoder
         for (int cnt = 0; cnt < bytesRead; cnt++)
         {
-        	if(programMode & RX_PACKED)
+        	if (programMode & RX_PACKED)
         	{
-        		for(uint8_t i = 0; i <= 7; i++)
+        		for (uint8_t idx = 0; idx <= 7; idx++)
         	    {
-        			decoder->rxSymbol( ( rxBuf[cnt] >> i ) & 0x01);
+        			decoder->rxSymbol((rxBuf[cnt] >> idx) & 0x01);
         		}
         	}
         	else
