@@ -26,6 +26,7 @@ void scr_update(std::string info);
 void scr_clear();
 void scr_print_infos(std::string msg);
 void scr_print_sds(std::string msg);
+void scr_print_network_time(std::string msg);
 
 #define WITH_NCURSES
 
