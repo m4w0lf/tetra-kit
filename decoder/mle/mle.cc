@@ -1,4 +1,5 @@
 #include "mle.h"
+#include <ctime>
 
 using namespace Tetra;
 
@@ -192,35 +193,28 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
         pos += 1;
         if (pFlag)
         {
-        	std::string txt = "";
-        	std::stringstream tt;
-        	//m_report->add("tetra network time", pdu.getValue(pos, 48));
-        	uint32_t utctime = pdu.getValue(pos, 24) * 2;
+            uint32_t utctime = pdu.getValue(pos, 24) * 2;
+            pos += 24;
 
-        	uint8_t sec = utctime % 60;
-        	utctime = utctime / 60;
+            uint8_t sign = pdu.getValue(pos, 1);    //ToDo: respect offset
+            pos += 1;
 
-        	uint8_t min = utctime % 60;
-        	utctime = utctime / 60;
+            uint8_t looffset = pdu.getValue(pos,6);
+            pos += 6;
 
-        	uint8_t hour = utctime % 24;
-
-        	uint16_t day = utctime / 24;
-
-        	char buf[13];
-        	snprintf(buf, sizeof(buf), "%0.3u %0.2u:%0.2u:%0.2u",day,hour,min,sec);
-// Todo: use time !
-        	txt = buf;
-        	m_report->add("tetra network time", txt);
-        	pos += 24;
-        	uint8_t sign = pdu.getValue(pos, 1);
-        	pos += 1;
-        	uint8_t looffset = pdu.getValue(pos,6);
-        	pos += 6;
-        	uint32_t year = 2000 + pdu.getValue(pos, 6);
-        	pos += 6;
+            uint32_t year = pdu.getValue(pos, 6);
+            pos += 6;
 
             pos += 11; // reserved
+
+            time_t rawtime = 0; // 1.1.1900 00:00:00
+            struct tm * timeinfo;
+            timeinfo = localtime(&rawtime);
+            timeinfo->tm_year = 100 + year;
+            rawtime = mktime(timeinfo);
+            rawtime += utctime;
+
+            m_report->add("tetra network time", ctime(&rawtime));   //ToDo: encode it as ISO8601
         }
 
         pFlag = pdu.getValue(pos, 1);
