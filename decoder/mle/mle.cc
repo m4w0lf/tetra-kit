@@ -202,21 +202,21 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
             uint8_t looffset = pdu.getValue(pos, 6);
             pos += 6;
 
-            int offsetsec = looffset * (sign ? -15 : 15) * 60;
-
             uint32_t year = pdu.getValue(pos, 6);
             pos += 6;
 
             pos += 11;                                                          // reserved
 
-            time_t rawtime = 0;                                                 // 1.1.1900 00:00:00
+            int offsetsec = looffset * (sign ? -15 : 15) * 60;                  // calc offset in seconds
+
+            time_t rawtime =  utctime + offsetsec;                              // 1.1.1970 00:00:00
             struct tm * timeinfo;
             timeinfo = localtime(&rawtime);
-            timeinfo->tm_year = 100 + year;
-            rawtime = mktime(timeinfo);
-            rawtime += utctime + offsetsec;
+            timeinfo->tm_year += (30 + year);                                   // Tetra time starts at year 2000
 
-            m_report->add("tetra network time", ctime(&rawtime));               // ToDo: encode it as ISO8601
+            char buf[sizeof("2000-01-01T00:00:00Z")];
+            strftime(buf, sizeof(buf), "%FT%TZ", timeinfo);                     // encode time as ISO 8601
+            m_report->add("tetra network time", buf);
         }
 
         pFlag = pdu.getValue(pos, 1);
