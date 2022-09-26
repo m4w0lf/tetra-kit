@@ -188,33 +188,35 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
     if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
         uint8_t pFlag;                                                          // presence flag
-
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
-        if (pFlag)
+
+        if (pFlag)                                                              // 18.5.24 TETRA network time
         {
             uint32_t utctime = pdu.getValue(pos, 24) * 2;
             pos += 24;
 
-            uint8_t sign = pdu.getValue(pos, 1);    //ToDo: respect offset
+            uint8_t sign = pdu.getValue(pos, 1);
             pos += 1;
 
-            uint8_t looffset = pdu.getValue(pos,6);
+            uint8_t looffset = pdu.getValue(pos, 6);
             pos += 6;
+
+            int offsetsec = looffset * (sign ? -15 : 15) * 60;
 
             uint32_t year = pdu.getValue(pos, 6);
             pos += 6;
 
-            pos += 11; // reserved
+            pos += 11;                                                          // reserved
 
-            time_t rawtime = 0; // 1.1.1900 00:00:00
+            time_t rawtime = 0;                                                 // 1.1.1900 00:00:00
             struct tm * timeinfo;
             timeinfo = localtime(&rawtime);
             timeinfo->tm_year = 100 + year;
             rawtime = mktime(timeinfo);
-            rawtime += utctime;
+            rawtime += utctime + offsetsec;
 
-            m_report->add("tetra network time", ctime(&rawtime));   //ToDo: encode it as ISO8601
+            m_report->add("tetra network time", ctime(&rawtime));               // ToDo: encode it as ISO8601
         }
 
         pFlag = pdu.getValue(pos, 1);
