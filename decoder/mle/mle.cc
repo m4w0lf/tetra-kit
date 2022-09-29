@@ -207,16 +207,19 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
 
             pos += 11;                                                          // reserved
 
-            int offsetsec = looffset * (sign ? -15 : 15) * 60;                  // calc offset in seconds
+            if ( (utctime < 0xf142ff) && (looffset < 0x39) && (year < 0x3f) )   // check if values are not reserved or invalid
+            {
+                int offsetsec = looffset * (sign ? -15 : 15) * 60;              // calc offset in seconds
 
-            time_t rawtime =  utctime + offsetsec;                              // 1.1.1970 00:00:00
-            struct tm * timeinfo;
-            timeinfo = localtime(&rawtime);
-            timeinfo->tm_year += (30 + year);                                   // Tetra time starts at year 2000
+                time_t rawtime =  utctime + offsetsec;                          // 1.1.1970 00:00:00
+                struct tm * timeinfo;
+                timeinfo = localtime(&rawtime);
+                timeinfo->tm_year += (30 + year);                               // Tetra time starts at year 2000
 
-            char buf[sizeof("2000-01-01T00:00:00Z")];
-            strftime(buf, sizeof(buf), "%FT%TZ", timeinfo);                     // encode time as ISO 8601
-            m_report->add("tetra network time", buf);
+                char buf[sizeof("2000-01-01T00:00:00Z")];
+                strftime(buf, sizeof(buf), "%FT%TZ", timeinfo);                 // encode time as ISO 8601 string
+                m_report->add("tetra network time", buf);
+            }
         }
 
         pFlag = pdu.getValue(pos, 1);
