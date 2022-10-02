@@ -1,4 +1,5 @@
 #include "mle.h"
+#include <ctime>
 
 using namespace Tetra;
 
@@ -187,13 +188,38 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
     if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
         uint8_t pFlag;                                                          // presence flag
-
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
-        if (pFlag)
+
+        if (pFlag)                                                              // 18.5.24 TETRA network time
         {
-            m_report->add("tetra network time", pdu.getValue(pos, 48));
-            pos += 48;
+            uint32_t utctime = pdu.getValue(pos, 24) * 2;
+            pos += 24;
+
+            uint8_t sign = pdu.getValue(pos, 1);
+            pos += 1;
+
+            uint8_t looffset = pdu.getValue(pos, 6);
+            pos += 6;
+
+            uint32_t year = pdu.getValue(pos, 6);
+            pos += 6;
+
+            pos += 11;                                                          // reserved
+
+            if ( (utctime < 0xf142ff) && (looffset < 0x39) && (year < 0x3f) )   // check if values are not reserved or invalid
+            {
+                int offsetsec = looffset * (sign ? -15 : 15) * 60;              // calc offset in seconds
+
+                time_t rawtime =  utctime + offsetsec;                          // 1.1.1970 00:00:00
+                struct tm * timeinfo;
+                timeinfo = localtime(&rawtime);
+                timeinfo->tm_year += (30 + year);                               // Tetra time starts at year 2000
+
+                char buf[sizeof("2000-01-01T00:00:00Z")];
+                strftime(buf, sizeof(buf), "%FT%TZ", timeinfo);                 // encode time as ISO 8601 string
+                m_report->add("tetra network time", buf);
+            }
         }
 
         pFlag = pdu.getValue(pos, 1);

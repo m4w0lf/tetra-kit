@@ -385,6 +385,18 @@ void cid_parse_pdu(std::string data, FILE * fd_log)
             }
         }
     }
+    else if (!service.compare("MLE"))                                                // MAC service (don't print)
+    {
+        if (!pdu.compare("D-NWRK-BROADCAST"))
+        {
+            std::string time_msg;
+            b_valid = jparser->read("tetra network time", &time_msg);
+            if(b_valid)
+            {
+                scr_print_network_time(time_msg);
+            }
+        }
+    }
     else                                                                        // other services
     {
         if ((!pdu.compare("D-ALERT")) ||

@@ -164,6 +164,13 @@ void scr_print_infos(std::string msg)
     wrefresh(wn_infos);
 }
 
+void scr_print_network_time(std::string msg)
+{
+    // print informations to top window
+    mvwprintw(wn_top, 0, 0, "%s\n", msg.c_str());
+    wrefresh(wn_top);
+}
+
 #else
 
 /*
