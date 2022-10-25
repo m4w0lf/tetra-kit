@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Pi4Dqpsk Rx
+# Title: Pi4Dqpsk Rx Packed
 # GNU Radio version: 3.9.5.0
 
 from distutils.version import StrictVersion
@@ -35,6 +35,7 @@ import sys
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
+from gnuradio import network
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
 import cmath
@@ -45,12 +46,12 @@ import time
 
 from gnuradio import qtgui
 
-class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
+class pi4dqpsk_rx_packed(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Pi4Dqpsk Rx", catch_exceptions=True)
+        gr.top_block.__init__(self, "Pi4Dqpsk Rx Packed", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Pi4Dqpsk Rx")
+        self.setWindowTitle("Pi4Dqpsk Rx Packed")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -68,7 +69,7 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "pi4dqpsk_rx")
+        self.settings = Qt.QSettings("GNU Radio", "pi4dqpsk_rx_packed")
 
         try:
             if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -227,6 +228,7 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
+        self.network_udp_sink_0 = network.udp_sink(gr.sizeof_char, 1, '127.0.0.1', 42000, 0, 1000, False)
         self.mmse_resampler_xx_0 = filter.mmse_resampler_cc(0, float(samp_rate)/(float(decim)*float(channel_rate)))
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(decim, firdes.low_pass(1,samp_rate,12500,12500*0.2), freq_offset_khz*1e3, samp_rate)
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, 2*cmath.pi/100.0, rrc_taps, nfilts, nfilts/2, 1.5, sps)
@@ -236,7 +238,7 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
         self.digital_diff_phasor_cc_0 = digital.diff_phasor_cc()
         self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constel)
         self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(constel.bits_per_symbol())
-        self.blocks_udp_sink_0 = blocks.udp_sink(gr.sizeof_char*1, '127.0.0.1', 42000, 1472, False)
+        self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(1, 8, "", True, gr.GR_LSB_FIRST)
         self.analog_feedforward_agc_cc_0 = analog.feedforward_agc_cc(8, 1)
 
 
@@ -244,7 +246,8 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.connect((self.analog_feedforward_agc_cc_0, 0), (self.digital_fll_band_edge_cc_0, 0))
-        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_udp_sink_0, 0))
+        self.connect((self.blocks_repack_bits_bb_0, 0), (self.network_udp_sink_0, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_repack_bits_bb_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_map_bb_0, 0))
         self.connect((self.digital_diff_phasor_cc_0, 0), (self.digital_constellation_decoder_cb_0, 0))
         self.connect((self.digital_diff_phasor_cc_0, 0), (self.qtgui_const_sink_x_0_0, 0))
@@ -259,7 +262,7 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "pi4dqpsk_rx")
+        self.settings = Qt.QSettings("GNU Radio", "pi4dqpsk_rx_packed")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -356,7 +359,7 @@ class pi4dqpsk_rx(gr.top_block, Qt.QWidget):
 
 
 
-def main(top_block_cls=pi4dqpsk_rx, options=None):
+def main(top_block_cls=pi4dqpsk_rx_packed, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')

@@ -157,6 +157,7 @@ Options:
   -d <level> print debug information
   -f keep fill bits
   -w enable wireshark output [EXPERIMENTAL]
+  -P pack rx data (1 byte = 8 bits) [new feature from @ShinjiLE, use it with phy/gnuradio-3.10/pi4dqpsk_rx_packed.grc. This reduces widely network usage.]
   -h print this help
 ```
 
