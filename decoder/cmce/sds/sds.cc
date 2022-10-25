@@ -456,7 +456,7 @@ void Sds::parseSubDTransfer(Pdu pdu, const uint16_t len)
     }
 
     int32_t sduLength = (int32_t)len - (int32_t)pos;
-    Pdu sdu = Pdu(pdu, pos, sduLength);                                         //utils_substract(len, pos));
+    Pdu sdu = Pdu(pdu, pos, sduLength);
 
     switch (protocolId)                                                         // table 29.21
     {
@@ -527,34 +527,35 @@ void Sds::parseSimpleTextMessaging(Pdu pdu, const uint16_t len)
 
     uint8_t timestamp_used = pdu.getValue(pos, 1);
     pos += 1;                                                                   // fill bit - (should be 0) - see 29.5.2.3
-																				// and if in SDS-TL this is the timestamp present bit - see 29.5.3.3
+                                                                                // and if in SDS-TL this is the timestamp present bit - see 29.5.3.3
     uint8_t textCodingScheme = pdu.getValue(pos, 7);
     pos += 7;
     m_report->add("text coding scheme", textCodingScheme);
 
     if(timestamp_used)
     {
-    	uint32_t timestamp = pdu.getValue(pos, 24);								// Todo: decode timestamp
-    	pos += 24;
-    	m_report->add("timestamp", timestamp);
+        uint32_t timestamp = pdu.getValue(pos, 24);                             // TODO decode timestamp
+        pos += 24;
+        m_report->add("timestamp", timestamp);
     }
 
     std::string txt = "";
     int32_t sduLength = (int32_t)len - (int32_t)pos;
+    Pdu sdu = Pdu(pdu, pos, sduLength);
 
     if (textCodingScheme == 0b0000000)                                          // GSM 7-bit alphabet - see 29.5.4.3
     {
-        txt = pdu.textGsm7BitDecode(sduLength);
+        txt = sdu.textGsm7BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else if (textCodingScheme <= 0b0011001)                                     // 8 bit alphabets
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);
+        txt = sdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else                                                                        // try generic 8 bits alphabet since we already have the full hexadecimal SDU
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);
+        txt = sdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
 }
@@ -588,20 +589,21 @@ void Sds::parseTextMessagingWithSdsTl(Pdu pdu)
 
     std::string txt = "";
     int32_t sduLength = (int32_t)len - (int32_t)pos;
+    Pdu sdu = Pdu(pdu, pos, sduLength);
 
     if (textCodingScheme == 0b0000000)                                          // GSM 7-bit alphabet - see 29.5.4.3
     {
-        txt = pdu.textGsm7BitDecode(sduLength);
+        txt = sdu.textGsm7BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else if (textCodingScheme <= 0b0011001)                                     // 8 bit alphabets
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);
+        txt = sdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
     else                                                                        // try generic 8 bits alphabet since we already have the full hexadecimal SDU
     {
-        txt = pdu.textGeneric8BitDecode(sduLength);
+        txt = sdu.textGeneric8BitDecode(sduLength);
         m_report->add("infos", txt);
     }
 }
@@ -623,26 +625,27 @@ void Sds::parseSimpleLocationSystem(Pdu pdu, const uint16_t len)
 
     // remaining bits are len - 8 - 8 since len is size of pdu
     std::string txt = "";
-    int32_t sduLength = (int32_t)len - (int32_t)pos; //utils_substract(len, pos);
+    int32_t sduLength = (int32_t)len - (int32_t)pos;
+    Pdu sdu = Pdu(pdu, pos, sduLength);
 
     switch (locationSystemCoding)
     {
     case 0b00000000:                                                            // NMEA 0183 - see Annex L
-        txt = pdu.locationNmeaDecode(sduLength);
+        txt = sdu.locationNmeaDecode(sduLength);
         m_report->add("infos", txt);
         break;
 
     case 0b00000001:                                                            // TODO RTCM RC-104 - see Annex L
         //txt = location_rtcm_decode(Pdu(pdu, pos, len - pos), len - pos);
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+        m_report->add("infos", sdu);
         break;
 
-    case 0b10000000:                                                            // TODO Proprietary. Notes from SQ5BPF: some proprietary system seen in the wild in Spain, Itlay and France some speculate it's either from DAMM or SEPURA
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+    case 0b10000000:                                                            // TODO Proprietary. Notes from SQ5BPF: some proprietary system seen in the wild in Spain, Italy and France some speculate it's either from DAMM or SEPURA
+        m_report->add("infos", sdu);
         break;
 
     default:
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+        m_report->add("infos", sdu);
         break;
     }
 }
@@ -664,26 +667,27 @@ void Sds::parseLocationSystemWithSdsTl(Pdu pdu)
     m_report->add("location coding system", locationSystemCoding);
 
     std::string txt = "";
-    int32_t sduLength = (int32_t)len - (int32_t)pos; //utils_substract(len, pos);
+    int32_t sduLength = (int32_t)len - (int32_t)pos;
+    Pdu sdu = Pdu(pdu, pos);
 
     switch (locationSystemCoding)
     {
     case 0b00000000:                                                            // NMEA 0183 - see Annex L
-        txt = pdu.locationNmeaDecode(sduLength);
+        txt = sdu.locationNmeaDecode(sduLength);
         m_report->add("infos", txt);
         break;
 
     case 0b00000001:                                                            // TODO RTCM RC-104 - see Annex L
         //txt = location_rtcm_decode(Pdu(pdu, pos, len - pos), len - pos);
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+        m_report->add("infos", sdu);
         break;
 
     case 0b10000000:                                                            // TODO Proprietary. Notes from SQ5BPF: some proprietary system seen in the wild in Spain, Itlay and France some speculate it's either from DAMM or SEPURA
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+        m_report->add("infos", sdu);
         break;
 
     default:
-        m_report->add("infos", Pdu(pdu, pos, sduLength));
+        m_report->add("infos", sdu);
         break;
     }
 }

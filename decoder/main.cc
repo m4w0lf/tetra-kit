@@ -101,7 +101,7 @@ int main(int argc, char * argv[])
                    "  -d <level> print debug information\n"
                    "  -f keep fill bits\n"
                    "  -w enable wireshark output [EXPERIMENTAL]\n"
-                   "  -P rx data is packed (1 Byte = 8Bits)\n"
+                   "  -P pack rx data (1 byte = 8 bits)\n"
                    "  -h print this help\n\n");
             exit(EXIT_FAILURE);
             break;

@@ -126,7 +126,7 @@ int main(int argc, char * argv[])
     char opt_filename_out[FILENAME_LEN] = "log.txt";                            // output Json text filename
 
     int program_mode     = STANDARD_MODE;
-    int line_length      = 256;                                                 // default line length
+    int line_length      = 200;                                                 // default line length
     int max_bottom_lines = 20;                                                  // default bottom lines count
     int raw_format_flag  = 1;
 
