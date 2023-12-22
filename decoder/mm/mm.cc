@@ -118,33 +118,34 @@ void Mm::parseDCkChangeDemand(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("acknowledgement flag", pdu.getValue(pos, 1));
+    m_report->add("Acknowledgement flag", pdu.getValue(pos, 1));
     pos += 1;
 
-    m_report->add("change of security class", pdu.getValue(pos, 2));
+    m_report->add("Change of Security Class", pdu.getValue(pos, 2));
     pos += 2;
 
     uint32_t keyChangeType = pdu.getValue(pos, 3);
-    m_report->add("key change type", pdu.getValue(pos, 3));
+    std::string txt = valueToString("Key change type", keyChangeType);
+    m_report->add("Key change type", txt);
     pos += 3;
 
     if (keyChangeType == 0)                                                     // SCK
     {
         uint32_t sckUse = pdu.getValue(pos, 1);
-        m_report->add("sck use", pdu.getValue(pos, 1));
+        m_report->add("SCK use", pdu.getValue(pos, 1));
         pos += 1;
 
         uint32_t numberOfScksChanged = pdu.getValue(pos, 4);
-        m_report->add("number of scks changed", pdu.getValue(pos, 4));
+        m_report->add("Number of SCKs changed", pdu.getValue(pos, 4));
         pos += 4;
 
         if (sckUse == 1 && numberOfScksChanged == 0)                            // DMO
         {
-            m_report->add("sck subset grouping type", pdu.getValue(pos, 4));
+            m_report->add("SCK subset grouping type", pdu.getValue(pos, 4));
             pos += 4;
-            m_report->add("sck subset number", pdu.getValue(pos, 5));
+            m_report->add("SCK subset number", pdu.getValue(pos, 5));
             pos += 5;
-            m_report->add("sck-vn", pdu.getValue(pos, 16));
+            m_report->add("SCK-VN", pdu.getValue(pos, 16));
             pos += 16;
         }
 
@@ -152,58 +153,57 @@ void Mm::parseDCkChangeDemand(Pdu pdu)
         {
             for (uint8_t cnt = 1; cnt <= numberOfScksChanged; cnt++)
             {
-                m_report->add("sck data", pdu.getValue(pos, 21));
-                pos += 21;
+                pos = parseSckData(pdu, pos);
             }
         }
     }
 
     if (keyChangeType == 1 || keyChangeType == 3)                               // CCK or Class 3 CCK and GCK activation
     {
-        m_report->add("cck-id", pdu.getValue(pos, 16));
+        m_report->add("CCK-id", pdu.getValue(pos, 16));
         pos += 16;
     }
 
     if (keyChangeType == 2)                                                     // GCK
     {
         uint32_t numberOfGcksChanged = pdu.getValue(pos, 4);
-        m_report->add("number of gcks changed", pdu.getValue(pos, 4));
+        m_report->add("Number of GCKs changed", pdu.getValue(pos, 4));
         pos += 4;
         for (uint8_t cnt = 1; cnt <= numberOfGcksChanged; cnt++)
         {
-            m_report->add("gck data", pdu.getValue(pos, 32));
-            pos += 32;
+            pos = parseGckData(pdu, pos);
         }
     }
 
     if (keyChangeType == 3 || keyChangeType == 4)                               // All GCKs or Class 3 CCK and GCK activation
     {
-        m_report->add("gck-vn", pdu.getValue(pos, 16));
+        m_report->add("GCK-VN", pdu.getValue(pos, 16));
         pos += 16;
     }
 
     uint32_t timeType = pdu.getValue(pos, 2);
-    m_report->add("time type", pdu.getValue(pos, 2));
+    txt = valueToString("Time type", timeType);
+    m_report->add("Time type", txt);
     pos += 2;
 
     if (timeType == 0)                                                          // Absolute IV
     {
-        m_report->add("slot number", pdu.getValue(pos, 2));
+        m_report->add("Slot number", pdu.getValue(pos, 2));
         pos += 2;
 
-        m_report->add("frame number", pdu.getValue(pos, 5));
+        m_report->add("Frame number", pdu.getValue(pos, 5));
         pos += 5;
 
-        m_report->add("multiframe number", pdu.getValue(pos, 6));
+        m_report->add("Multiframe number", pdu.getValue(pos, 6));
         pos += 6;
 
-        m_report->add("hyperframe number", pdu.getValue(pos, 16));
+        m_report->add("Hyperframe number", pdu.getValue(pos, 16));
         pos += 16;
     }
 
     if (timeType == 1)
     {
-        m_report->add("network time", pdu.getValue(pos, 48));
+        m_report->add("Network time", pdu.getValue(pos, 48));
         pos += 48;
     }
 
@@ -224,35 +224,46 @@ void Mm::parseDDisable(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("intent/confirm", pdu.getValue(pos, 1));
+    m_report->add("Intent/Confirm", pdu.getValue(pos, 1));
     pos += 1;
 
-    m_report->add("disabling type", pdu.getValue(pos, 1));
+    m_report->add("Disabling type", pdu.getValue(pos, 1));
     pos += 1;
 
     bool equipmentDisable = pdu.getValue(pos, 1);
-    m_report->add("equipment disable", pdu.getValue(pos, 1));
+    m_report->add("Equipment disable", pdu.getValue(pos, 1));
     pos += 1;
 
     if (equipmentDisable)
     {
-        m_report->add("tetra equipment identity", pdu.getValue(pos, 60));
+        m_report->add("TETRA Equipment Identity", pdu.getValue(pos, 60));
         pos += 60;
     }
 
     bool subscriptionDisable = pdu.getValue(pos, 1);
-    m_report->add("subscription disable", pdu.getValue(pos, 1));
+    m_report->add("Subscription disable", pdu.getValue(pos, 1));
     pos += 1;
 
     if (subscriptionDisable)
     {
         pos = parseAddressExtension(pdu, pos);
-        m_report->add("ssi", pdu.getValue(pos, 24));
+        m_report->add("SSI", pdu.getValue(pos, 24));
         pos += 24;
     }
 
-    m_report->add("authentication challenge", pdu.getValue(pos, 160));
-    pos += 160;
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAuthenticationChallenge(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -270,32 +281,43 @@ void Mm::parseDEnable(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("intent/confirm", pdu.getValue(pos, 1));
+    m_report->add("Intent/Confirm", pdu.getValue(pos, 1));
     pos += 1;
 
     bool equipmentEnable = pdu.getValue(pos, 1);
-    m_report->add("equipment enable", pdu.getValue(pos, 1));
+    m_report->add("Equipment enable", pdu.getValue(pos, 1));
     pos += 1;
 
     if (equipmentEnable)
     {
-        m_report->add("tetra equipment identity", pdu.getValue(pos, 60));
+        m_report->add("TETRA Equipment Identity", pdu.getValue(pos, 60));
         pos += 60;
     }
 
     bool subscriptionEnable = pdu.getValue(pos, 1);
-    m_report->add("subscription enable", pdu.getValue(pos, 1));
+    m_report->add("Subscription enable", pdu.getValue(pos, 1));
     pos += 1;
 
     if (subscriptionEnable)
     {
         pos = parseAddressExtension(pdu, pos);
-        m_report->add("ssi", pdu.getValue(pos, 24));
+        m_report->add("SSI", pdu.getValue(pos, 24));
         pos += 24;
     }
 
-    m_report->add("authentication challenge", pdu.getValue(pos, 160));
-    pos += 160;
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAuthenticationChallenge(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -314,8 +336,7 @@ void Mm::parseDLocationUpdateAccept(Pdu pdu)
     uint32_t pos = 4;                                                           // pdu type
 
     std::string txt = valueToString("location update accept type", pdu.getValue(pos, 3));
-    m_report->add("location update accept type", pdu.getValue(pos, 3));
-    m_report->add("location update accept type val", txt);
+    m_report->add("Location update accept type", txt);
     pos += 3;
 
     // type 2 elements (Table E.11)
@@ -330,7 +351,7 @@ void Mm::parseDLocationUpdateAccept(Pdu pdu)
         pos += 1;
         if (pBit)
         {
-            m_report->add("ssi", pdu.getValue(pos, 24));
+            m_report->add("SSI", pdu.getValue(pos, 24));
             pos += 24;
         }
 
@@ -345,7 +366,7 @@ void Mm::parseDLocationUpdateAccept(Pdu pdu)
         pos += 1;
         if (pBit)
         {
-            m_report->add("subscriber class", pdu.getValue(pos, 16));
+            m_report->add("Subscriber class", pdu.getValue(pos, 16));
             pos += 16;
         }
 
@@ -387,19 +408,42 @@ void Mm::parseDLocationUpdateCommand(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("group identity report", pdu.getValue(pos, 1));
+    m_report->add("Group identity report request", boolToString(pdu.getValue(pos, 1)));
     pos += 1;
 
     bool cipherControl = pdu.getValue(pos, 1);
-    m_report->add("cipher control", pdu.getValue(pos, 1));
     pos += 1;
 
     if (cipherControl)
     {
+        m_report->add("Ciphering", "on");
         pos = parseCipheringParameters(pdu, pos);
     }
+    else
+    {
+        m_report->add("Ciphering", "off");
+    }
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -417,26 +461,47 @@ void Mm::parseDLocationUpdateReject(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    std::string txt = valueToString("location update type", pdu.getValue(pos, 3));
-    m_report->add("location update type", pdu.getValue(pos, 3));
-    m_report->add("location update type val", txt);
+    std::string txt = valueToString("Location update type", pdu.getValue(pos, 3));
+    m_report->add("Location update type", txt);
     pos += 3;
 
-    std::string rejectCauseTxt = valueToString("reject cause", pdu.getValue(pos, 5));
-    m_report->add("reject cause", pdu.getValue(pos, 5));
-    m_report->add("reject cause val", rejectCauseTxt);
+    std::string rejectCauseTxt = valueToString("Reject cause", pdu.getValue(pos, 5));
+    m_report->add("Reject cause val", rejectCauseTxt);
     pos += 5;
 
     bool cipherControl = pdu.getValue(pos, 1);
-    m_report->add("cipher control", pdu.getValue(pos, 1));
     pos += 1;
 
     if (cipherControl)
     {
+        m_report->add("Ciphering", "on");
         pos = parseCipheringParameters(pdu, pos);
     }
+    else
+    {
+        m_report->add("Ciphering", "off");
+    }
 
-    pos = parseAddressExtension(pdu, pos);
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
+
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            pos = parseAddressExtension(pdu, pos);
+        }
+
+        bool mBit = pdu.getValue(pos, 1);
+
+        if (mBit)
+        {
+            pos = parseType34Elements(pdu, pos);
+        }
+    }
 
     m_report->send();
 }
@@ -455,7 +520,7 @@ void Mm::parseDLocationUpdateProceeding(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("ssi", pdu.getValue(pos, 24));
+    m_report->add("SSI", pdu.getValue(pos, 24));
     pos += 24;
 
     pos = parseAddressExtension(pdu, pos);
@@ -477,14 +542,23 @@ void Mm::parseDAttachDetachGroupIdentity(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("group identity report", pdu.getValue(pos, 1));
+    m_report->add("Group identity report request", boolToString(pdu.getValue(pos, 1)));
     pos += 1;
 
-    m_report->add("group identity acknowledgement request", pdu.getValue(pos, 1));
+    m_report->add("Group identity acknowledgement requested", boolToString(pdu.getValue(pos, 1)));
     pos += 1;
 
-    m_report->add("group identity attach/detach mode", pdu.getValue(pos, 1));
+    bool groupIdAttachMode = pdu.getValue(pos, 1);
     pos += 1;
+
+    if (groupIdAttachMode)
+    {
+        m_report->add("Group identity attach/detach mode", "Detach all and attach");
+    }
+    else
+    {
+        m_report->add("Group identity attach/detach mode", "Amendment");
+    }
 
     bool oBit = pdu.getValue(pos, 1);                                           // o-bit
     pos += 1;
@@ -515,7 +589,8 @@ void Mm::parseDAttachDetachGroupIdentityAck(Pdu pdu)
 
     uint32_t pos = 4;                                                           // pdu type
 
-    m_report->add("group identity accept/reject", pdu.getValue(pos, 1));
+    // 16.10.12 Group identity accept/reject
+    m_report->add("All attachment/detachments accepted", boolToString(!pdu.getValue(pos, 1)));
     pos += 1;
 
     // reserved
@@ -550,18 +625,34 @@ void Mm::parseMmPduNotSupported(Pdu pdu)
 
     uint32_t pos = 4;
 
-    std::string txt = valueToString("pdu type", pdu.getValue(pos, 4));
-    m_report->add("not-supported pdu type", pdu.getValue(pos, 4));
-    m_report->add("not-supported pdu type", txt);
+    std::string txt = valueToString("PDU type", pdu.getValue(pos, 4));
+    m_report->add("Not-supported PDU type", txt);
     pos += 4;
 
-    // variable data
-    /*
-    m_report->add("not-supported sub pdu type", pdu.getValue(pos, 4));
-    pos += 4;
+    bool oBit = pdu.getValue(pos, 1);
+    pos += 1;
 
-    m_report->add("length of the copied pdu", pdu.getValue(pos, 8));
-    pos += 8;
+    /* variable data
+    if (oBit)
+    {
+        bool pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            m_report->add("not-supported sub pdu type", pdu.getValue(pos, 4));
+            pos += 4;
+        }
+
+        pBit = pdu.getValue(pos, 1);
+        pos += 1;
+
+        if (pBit)
+        {
+            m_report->add("Length of the copied PDU", pdu.getValue(pos, 8));
+            pos += 8;
+        }
+    }
     */
 
     m_report->send();

@@ -49,7 +49,7 @@ void Mle::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
         infos = tt.str();
         return;                                                                 // TODO clean up
     }
-    else if (macLogicalChannel == BNCH)                                         // TM-SDU was already sent directly by MAC 18.4.2. Report infos and stop here
+    else if ((macLogicalChannel == BNCH) || (macLogicalChannel == SCH_HD))      // TM-SDU was already sent directly by MAC 18.4.2. Report infos and stop here
     {
         bPrintInfos = true;
         txt = "MLE";

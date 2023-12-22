@@ -66,6 +66,16 @@ std::string Tetra::vectorToString(const std::vector<uint8_t> data, const int len
 }
 
 /**
+ * @brief Convert bool to string (true/false)
+ *
+ */
+
+std::string Tetra::boolToString(bool value)
+{
+    return value ? "true" : "false";
+}
+
+/**
  * @brief Varidiac function to return string
  *
  */

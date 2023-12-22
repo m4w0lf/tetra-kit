@@ -55,8 +55,6 @@ void Mm::parseDChangeOfEnergySavingModeRequest(Pdu pdu)
     m_report->start("MM", "D-CHANGE OF ENERGY SAVING MODE REQUEST", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     pos = parseEnergySavingInformation(pdu, pos);
@@ -76,8 +74,6 @@ void Mm::parseDChangeOfEnergySavingModeResponse(Pdu pdu)
     m_report->start("MM", "D-CHANGE OF ENERGY SAVING MODE RESPONSE", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     pos = parseEnergySavingInformation(pdu, pos);
@@ -97,13 +93,12 @@ void Mm::parseDDualWatchModeResponse(Pdu pdu)
     m_report->start("MM", "D-DUAL WATCH MODE RESPONSE", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     pos = parseEnergySavingInformation(pdu, pos);
 
-    m_report->add("result of dual watch request", pdu.getValue(pos, 3));
+    std::string txt = valueToString("Result of dual watch request", pdu.getValue(pos, 3));
+    m_report->add("Result of dual watch request", txt);
     pos += 3;
 
     // reserved
@@ -146,8 +141,6 @@ void Mm::parseDTerminatingDualWatchModeResponse(Pdu pdu)
     m_report->start("MM", "D-TERMINATING DUAL WATCH MODE RESPONSE", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     // reserved
@@ -199,14 +192,25 @@ void Mm::parseDChangeOfDualWatchModeRequest(Pdu pdu)
     m_report->start("MM", "D-CHANGE OF DUAL WATCH MODE REQUEST", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     pos = parseEnergySavingInformation(pdu, pos);
 
-    m_report->add("reason for dual watch change by swmi", pdu.getValue(pos, 3));
+    uint8_t reasonForDwChange = pdu.getValue(pos, 3);
     pos += 3;
+
+    switch (reasonForDwChange)
+    {
+        case 0b000:
+            m_report->add("Reason for dual watch change by SwMI", "Dual watch terminated for undefined reason");
+            break;
+        case 0b001:
+            m_report->add("Reason for dual watch change by SwMI", "Change of dual watch energy economy group");
+            break;
+        default:
+            m_report->add("Reason for dual watch change by SwMI", "Reserved");
+            break;
+    }
 
     // reserved
     pos += 8;
@@ -239,7 +243,7 @@ void Mm::parseDChangeOfDualWatchModeRequest(Pdu pdu)
 
 /**
  * @brief MM D-MS FREQUENCY BANDS REQUEST - 16.9.2.5.8
- *
+ *  No useful data to be parsed in this PDU.
  */
 
 void Mm::parseDMsFrequencyBandsRequest(Pdu pdu)
@@ -249,8 +253,6 @@ void Mm::parseDMsFrequencyBandsRequest(Pdu pdu)
     m_report->start("MM", "D-MS FREQUENCY BANDS REQUEST", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
     bool oBit = pdu.getValue(pos, 1);
@@ -270,7 +272,7 @@ void Mm::parseDMsFrequencyBandsRequest(Pdu pdu)
 }
 
 /**
- * @brief MM D-CHANGE OF ENERGY SAVING MODE REQUEST - 16.9.2.5.2
+ * @brief MM D-DISTANCE REPORTING REQUEST - 16.9.2.5.9
  *
  */
 
@@ -281,15 +283,22 @@ void Mm::parseDDistanceReportingRequest(Pdu pdu)
     m_report->start("MM", "D-DISTANCE REPORTING REQUEST", m_tetraTime, m_macAddress);
 
     uint32_t pos = 4;
-
-    m_report->add("status downlink", pdu.getValue(pos, 6));
     pos += 6;
 
-    m_report->add("distance reporting timer", pdu.getValue(pos, 7));
+    m_report->add("Distance reporting timer", pdu.getValue(pos, 7));
     pos += 7;
 
-    m_report->add("distance reporting validity", pdu.getValue(pos, 1));
+    bool distanceReportingValidity = pdu.getValue(pos, 1);
     pos += 1;
+
+    if (distanceReportingValidity)
+    {
+        m_report->add("Distance reporting validity", "Report until next ITSI attach or migration");
+    }
+    else
+    {
+        m_report->add("Distance reporting validity", "Report until next location update");
+    }
 
     m_report->send();
 }
