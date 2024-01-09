@@ -466,7 +466,7 @@ void Mm::parseDLocationUpdateReject(Pdu pdu)
     pos += 3;
 
     std::string rejectCauseTxt = valueToString("Reject cause", pdu.getValue(pos, 5));
-    m_report->add("Reject cause val", rejectCauseTxt);
+    m_report->add("Reject cause", rejectCauseTxt);
     pos += 5;
 
     bool cipherControl = pdu.getValue(pos, 1);
