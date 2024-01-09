@@ -5,7 +5,7 @@ LDFLAGS = -lz
 SRC = main.cc decoder.cc \
 	common/base64.cc common/pdu.cc common/layer.cc common/log.cc common/report.cc common/tetracell.cc common/utils.cc common/tetra.cc \
 	llc/llc.cc \
-	mle/mle.cc \
+	mle/mle.cc mle/mle_elements.cc \
 	sndcp/sndcp.cc \
 	cmce/cmce.cc cmce/sds/sds.cc cmce/sds/lip.cc \
 	mm/mm.cc mm/mm_elements.cc mm/d_authentication.cc mm/d_mm_status.cc mm/d_otar.cc \

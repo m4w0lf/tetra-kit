@@ -15,3 +15,4 @@ recorder/wav/cdecoder
 recorder/wav/sdecoder
 decoder/decoder
 recorder/recorder
+raw/*
