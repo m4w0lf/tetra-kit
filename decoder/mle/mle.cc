@@ -49,7 +49,7 @@ void Mle::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
         infos = tt.str();
         return;                                                                 // TODO clean up
     }
-    else if (macLogicalChannel == BNCH)                                         // TM-SDU was already sent directly by MAC 18.4.2. Report infos and stop here
+    else if ((macLogicalChannel == BNCH) || (macLogicalChannel == SCH_HD))      // TM-SDU was already sent directly by MAC 18.4.2. Report infos and stop here
     {
         bPrintInfos = true;
         txt = "MLE";
@@ -177,49 +177,22 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
 
     uint32_t pos = 3;                                                           // PDU type
 
-    m_report->add("cell re-select parameter", pdu.getValue(pos, 16));
-    pos += 16;
+    pos = parseCellReselectParameters(pdu, pos);
 
-    m_report->add("cell service level", pdu.getValue(pos, 2));
+    m_report->add("Cell load CA", pdu.getValue(pos, 2));
     pos += 2;
 
-    uint8_t oFlag = pdu.getValue(pos, 1);                                       // option flag
+    bool oFlag = pdu.getValue(pos, 1);                                          // option flag
     pos += 1;
     if (oFlag)                                                                  // there is type2 or type3/4 fields
     {
-        uint8_t pFlag;                                                          // presence flag
+        bool pFlag;                                                             // presence flag
         pFlag = pdu.getValue(pos, 1);
         pos += 1;
 
-        if (pFlag)                                                              // 18.5.24 TETRA network time
+        if (pFlag)
         {
-            uint32_t utctime = pdu.getValue(pos, 24) * 2;
-            pos += 24;
-
-            uint8_t sign = pdu.getValue(pos, 1);
-            pos += 1;
-
-            uint8_t looffset = pdu.getValue(pos, 6);
-            pos += 6;
-
-            uint32_t year = pdu.getValue(pos, 6);
-            pos += 6;
-
-            pos += 11;                                                          // reserved
-
-            if ( (utctime < 0xf142ff) && (looffset < 0x39) && (year < 0x3f) )   // check if values are not reserved or invalid
-            {
-                int offsetsec = looffset * (sign ? -15 : 15) * 60;              // calc offset in seconds
-
-                time_t rawtime =  utctime + offsetsec;                          // 1.1.1970 00:00:00
-                struct tm * timeinfo;
-                timeinfo = localtime(&rawtime);
-                timeinfo->tm_year += (30 + year);                               // Tetra time starts at year 2000
-
-                char buf[sizeof("2000-01-01T00:00:00Z")];
-                strftime(buf, sizeof(buf), "%FT%TZ", timeinfo);                 // encode time as ISO 8601 string
-                m_report->add("tetra network time", buf);
-            }
+            pos = parseTetraNetworkTime(pdu, pos);
         }
 
         pFlag = pdu.getValue(pos, 1);
@@ -243,119 +216,6 @@ void Mle::processDNwrkBroadcast(Pdu pdu)
     }
 
     m_report->send();
-}
-
-/**
- * @brief Parse neighbour cell information 18.5.17 and return actual data length read
- *        to increase flux position. This function used by mle_process_d_nwrk_broadcast
- *
- */
-
-uint32_t Mle::parseNeighbourCellInformation(Pdu data, uint32_t posStart, std::vector<std::tuple<std::string, uint64_t>> & infos)
-{
-    uint32_t pos = posStart;
-
-    infos.push_back(std::make_tuple("identifier", data.getValue(pos, 5)));
-    pos += 5;
-
-    infos.push_back(std::make_tuple("reselection types supported", data.getValue(pos, 2)));
-    pos += 2;
-
-    infos.push_back(std::make_tuple("neighbour cell synchronized", data.getValue(pos, 1)));
-    pos += 1;
-
-    infos.push_back(std::make_tuple("service level", data.getValue(pos, 2)));
-    pos += 2;
-
-    infos.push_back(std::make_tuple("main carrier number", data.getValue(pos, 12)));
-    pos += 12;
-
-    uint8_t oFlag = data.getValue(pos, 1);                                      // option flag
-    pos += 1;
-    if (oFlag)                                                                  // there is type2 fields
-    {
-        uint8_t pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("main carrier number extension", data.getValue(pos, 10)));
-            pos += 10;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("MCC", data.getValue(pos, 10)));
-            pos += 10;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("MNC", data.getValue(pos, 14)));
-            pos += 14;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("LA", data.getValue(pos, 14)));
-            pos += 14;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("max. MS tx power", data.getValue(pos, 3)));
-            pos += 3;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("min. rx access level", data.getValue(pos, 4)));
-            pos += 4;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("subscriber class", data.getValue(pos, 16)));
-            pos += 16;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("BS service details", data.getValue(pos, 12)));
-            pos += 12;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("timeshare or security", data.getValue(pos, 5)));
-            pos += 5;
-        }
-
-        pFlag = data.getValue(pos, 1);
-        pos += 1;
-        if (pFlag)
-        {
-            infos.push_back(std::make_tuple("TDMA frame offset", data.getValue(pos, 6)));
-            pos += 6;
-        }
-    }
-
-    return pos;
 }
 
 /**

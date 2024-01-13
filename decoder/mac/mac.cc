@@ -1204,9 +1204,6 @@ Pdu Mac::pduProcessSync(Pdu pdu)
 
         m_tetraCell->updateScramblingCode(mcc, mnc, colorCode);
 
-        m_report->start("MAC", "SYNC", m_tetraTime, m_macAddress);
-        m_report->send();
-
         if ((m_tetraTime.fn == 18) && (((m_tetraTime.mn + m_tetraTime.tn) % 4) == 3))
         {
             m_log->print(LogLevel::NONE, "BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",

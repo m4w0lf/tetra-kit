@@ -28,7 +28,14 @@ namespace Tetra {
         void processDNwrkBroadcast(Pdu pdu);
         void processDNwrkBroadcastExtension(Pdu pdu);
 
+        uint64_t parseBsServiceDetails(Pdu pdu, uint64_t pos, std::vector<std::tuple<std::string, uint64_t>> & infos);
+        uint64_t parseCellReselectParameters(Pdu pdu, uint64_t pos);
+        uint64_t parseMainCarrierNumberExtension(Pdu pdu, uint64_t pos, std::vector<std::tuple<std::string, uint64_t>> & infos);
+        uint64_t parseNeighbourCellBroadcast(Pdu pdu, uint64_t pos, std::vector<std::tuple<std::string, uint64_t>> & infos);
         uint32_t parseNeighbourCellInformation(Pdu data, uint32_t posStart, std::vector<std::tuple<std::string, uint64_t>> & infos);
+        uint64_t parseTetraNetworkTime(Pdu pdu, uint64_t pos);
+        uint64_t parseTimeshareOrSecurity(Pdu pdu, uint64_t pos, std::vector<std::tuple<std::string, uint64_t>> & elements);
+        uint64_t parseSecurityParameters(Pdu pdu, uint64_t pos, std::vector<std::tuple<std::string, uint64_t>> & elements);
     };
 
 };

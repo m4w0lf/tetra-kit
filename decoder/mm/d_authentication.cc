@@ -53,10 +53,10 @@ void Mm::parseDAuthenticationDemand(Pdu pdu)
 
     uint32_t pos = 6;                                                           // pdu type
 
-    m_report->add("random challenge", pdu.getValue(pos, 80));
+    m_report->add("Random challenge", pdu.getValue(pos, 80));
     pos += 80;
 
-    m_report->add("random seed", pdu.getValue(pos, 80));
+    m_report->add("Random seed", pdu.getValue(pos, 80));
     pos += 80;
 
     m_report->send();
@@ -75,10 +75,10 @@ void Mm::parseDAuthenticationResponse(Pdu pdu)
 
     uint32_t pos = 6;                                                           // pdu type
 
-    m_report->add("random seed", pdu.getValue(pos, 80));
+    m_report->add("Random seed", pdu.getValue(pos, 80));
     pos += 80;
 
-    m_report->add("response value", pdu.getValue(pos, 32));
+    m_report->add("Response value", pdu.getValue(pos, 32));
     pos += 32;
 
     uint8_t authFlag = pdu.getValue(pos, 1);
@@ -86,7 +86,7 @@ void Mm::parseDAuthenticationResponse(Pdu pdu)
 
     if (authFlag)
     {
-        m_report->add("random challenge", pdu.getValue(pos, 80));
+        m_report->add("Random challenge", pdu.getValue(pos, 80));
         pos += 80;
     }
 
@@ -106,15 +106,15 @@ void Mm::parseDAuthenticationResult(Pdu pdu)
 
     uint32_t pos = 6;                                                           // pdu type
 
-    m_report->add("authentication result", pdu.getValue(pos, 1));
+    m_report->add("Authentication successful", boolToString(pdu.getValue(pos, 1)));
     pos += 1;
 
-    uint8_t authFlag = pdu.getValue(pos, 1);
+    bool authFlag = pdu.getValue(pos, 1);
     pos += 1;
 
     if (authFlag)
     {
-        m_report->add("response value", pdu.getValue(pos, 32));
+        m_report->add("Response value", pdu.getValue(pos, 32));
         pos += 32;
     }
 
@@ -134,8 +134,17 @@ void Mm::parseDAuthenticationReject(Pdu pdu)
 
     uint32_t pos = 6;                                                           // pdu type
 
-    m_report->add("authentication reject reason", pdu.getValue(pos, 3));
+    uint8_t authRejectReason = pdu.getValue(pos, 3);
     pos += 3;
+
+    if (!authRejectReason)
+    {
+        m_report->add("Authentication reject reason", "Authentication not supported");
+    }
+    else
+    {
+        m_report->add("Authentication reject reason", authRejectReason);
+    }
 
     m_report->send();
 }
