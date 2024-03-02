@@ -1097,6 +1097,10 @@ Pdu Mac::pduProcessSysinfo(Pdu pdu, int32_t * pduSizeInMac)
 
         pos += 2;                                                               // optional field flag
         pos += 20;                                                              // option value, always present
+        
+        uint32_t locationArea = pdu.getValue(pos, 14);
+        
+        m_tetraCell->setLocationArea(locationArea);
 
         // calculate cell frequencies
 
@@ -1206,11 +1210,12 @@ Pdu Mac::pduProcessSync(Pdu pdu)
 
         if ((m_tetraTime.fn == 18) && (((m_tetraTime.mn + m_tetraTime.tn) % 4) == 3))
         {
-            m_log->print(LogLevel::NONE, "BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",
+            m_log->print(LogLevel::NONE, "BSCH        : TN/FN/MN = %2u/%2u/%2u  MAC-SYNC              ColorCode=%3d  LA=%3d  MCC/MNC = %3u/ %3u  Freq= %10.6f MHz  burst=%u\n",
                    m_tetraTime.tn,
                    m_tetraTime.fn,
                    m_tetraTime.mn,
                    m_tetraCell->colorCode(),
+                   m_tetraCell->locationArea(),
                    m_tetraCell->mcc(),
                    m_tetraCell->mnc(),
                    m_tetraCell->downlinkFrequency() / 1.0e6,

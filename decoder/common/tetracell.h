@@ -26,10 +26,12 @@ namespace Tetra {
         void updateScramblingCode(const uint32_t mcc, const uint32_t mnc, const uint16_t colorCode);
         bool isCellInformationsAcquired();
         void setFrequencies(int32_t downlinkFrequency, int32_t uplinkFrequency);
+        void setLocationArea(uint32_t la);
 
         uint32_t mcc();
         uint32_t mnc();
         uint32_t colorCode();
+        uint32_t locationArea();
         int32_t  downlinkFrequency();
         int32_t  uplinkFrequency();
 
@@ -38,6 +40,7 @@ namespace Tetra {
         uint32_t m_mnc;                                                         ///< Cell MNC
         uint16_t m_colorCode;                                                   ///< Cell Color code
         uint32_t m_scramblingCode;                                              ///< Cell Scrambling code
+        uint32_t m_locationArea;
 
         int32_t m_downlinkFrequency;                                            ///< Downlink frequency [Hz]
         int32_t m_uplinkFrequency;                                              ///< Uplink frequency [Hz]

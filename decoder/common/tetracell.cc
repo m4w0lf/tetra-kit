@@ -13,6 +13,7 @@ TetraCell::TetraCell()
     m_mnc               = 0;
     m_colorCode         = 0;
     m_scramblingCode    = 0;
+    m_locationArea      = 0;
 
     m_downlinkFrequency = 0;
     m_uplinkFrequency   = 0;
@@ -103,6 +104,16 @@ uint32_t TetraCell::mnc()
 uint32_t TetraCell::colorCode()
 {
     return m_colorCode;
+}
+
+uint32_t TetraCell::locationArea()
+{
+    return m_locationArea;
+}
+
+void TetraCell::setLocationArea(uint32_t la)
+{
+    m_locationArea = la;
 }
 
 /**

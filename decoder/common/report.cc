@@ -39,7 +39,15 @@ Report::~Report()
 void Report::start(std::string service, std::string pdu, const TetraTime tetraTime, const MacAddress macAddress)
 {
     m_jdoc.SetObject();                                                           // create empty Json DOM
+    
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+    std::tm* timeinfo = std::localtime(&currentTime);
+    std::ostringstream oss;
+    oss << std::put_time(timeinfo, "%Y-%m-%dT%H:%M:%SZ");
+    std::string timeString = oss.str();
 
+    add("time", timeString);
     add("service", service);
     add("pdu",     pdu);
 
@@ -89,6 +97,7 @@ void Report::start(std::string service, std::string pdu, const TetraTime tetraTi
         break;
     }
 }
+
 
 /**
  * @brief Prepare Json report for U-PLANE message which differs from standard report:
