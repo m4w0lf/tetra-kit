@@ -48,11 +48,11 @@ void Sds::service(Pdu pdu, const MacLogicalChannel macLogicalChannel, TetraTime 
     {
     case 0b01000:
         txt = "D-STATUS";
-        parseDStatus(Pdu(pdu, pos));                                            // SDS sub-entity see 14.7.1.10
+        parseDStatus(Pdu(pdu, pos));                                            // SDS sub-entity see 14.7.1.11
         break;
     case 0b01111:
         txt = "D-SDS-DATA";
-        parseDSdsData(Pdu(pdu, pos));                                           // SDS sub-entity see 14.7.1.11
+        parseDSdsData(Pdu(pdu, pos));                                           // SDS sub-entity see 14.7.1.10
         break;
     default:
         break;
@@ -256,8 +256,7 @@ void Sds::parseType4Data(Pdu pdu, const uint16_t len)
             break;
 
         case 0b00000001:
-            m_report->add("protocol info", "OTAK");
-            // 29.5.1
+            m_report->add("protocol info", "OTAK");                             // 29.5.1
             break;
 
         case 0b00000010:
@@ -322,7 +321,7 @@ void Sds::parseType4Data(Pdu pdu, const uint16_t len)
             {
                 m_report->add("protocol info", "available for user application definition"); // Annex J
             }
-            else                                                                // 0b0011111111
+            else                                                                // = 0b01111111
             {
                 m_report->add("protocol info", "reserved for extension");       // TODO this value indicates that the next 8 bits is the protocol identifier and the 16 bits
                                                                                 // replaces the 8 bits of the procol identifier in this PDU using this extension method
