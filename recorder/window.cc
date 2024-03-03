@@ -237,4 +237,10 @@ void scr_print_infos(std::string msg)
     printf("%s\n", msg.c_str());
 }
 
+void scr_print_network_time(std::string msg)
+{
+    // print informations to top window
+    printf("%s\n", msg.c_str());
+}
+
 #endif
