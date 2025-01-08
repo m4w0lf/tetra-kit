@@ -48,13 +48,18 @@ int main(int argc, char * argv[])
     char optFilenameInput[FILENAME_LEN]  = "";                                  // input bits filename
     char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
+    const int IP_LEN = 16;
+    char recorderAddress[IP_LEN] = "";  
+
+    strncpy(recorderAddress, "127.0.0.1", 9);
+
     int programMode = STANDARD_MODE;
     int debugLevel = 1;
     bool bRemoveFillBits = true;
     bool bEnableWiresharkOutput = false;
 
     int option;
-    while ((option = getopt(argc, argv, "hPwr:t:i:o:d:f")) != -1)
+    while ((option = getopt(argc, argv, "hPwr:t:i:o:d:f:a")) != -1)
     {
         switch (option)
         {
@@ -91,11 +96,16 @@ int main(int argc, char * argv[])
             bEnableWiresharkOutput = true;
             break;
 
+        case 'a':
+            strncpy(recorderAddress, optarg, IP_LEN - 1);
+            break;
+
         case 'h':
             printf("\nUsage: ./decoder [OPTIONS]\n\n"
                    "Options:\n"
                    "  -r <UDP socket> receiving from phy [default port is 42000]\n"
                    "  -t <UDP socket> sending Json data [default port is 42100]\n"
+                   "  -a <ip address> sending Json data [default is 127.0.0.1]\n"
                    "  -i <file> replay data from binary file instead of UDP\n"
                    "  -o <file> record data to binary file (can be replayed with -i option)\n"
                    "  -d <level> print debug information\n"
@@ -119,7 +129,7 @@ int main(int argc, char * argv[])
     memset(&addr_output, 0, sizeof(struct sockaddr_in));
     addr_output.sin_family = AF_INET;
     addr_output.sin_port = htons(udpPortTx);
-    inet_aton("127.0.0.1", &addr_output.sin_addr);
+    inet_aton(recorderAddress, &addr_output.sin_addr);
 
     int udpSocketFd  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     connect(udpSocketFd, (struct sockaddr *) & addr_output, sizeof(struct sockaddr));
@@ -191,7 +201,7 @@ int main(int argc, char * argv[])
         memset(&addr, 0, sizeof(struct sockaddr_in));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(udpPortRx);
-        inet_aton("127.0.0.1", &addr.sin_addr);
+        inet_aton("0.0.0.0", &addr.sin_addr);
 
         fdInput = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         bind(fdInput, (struct sockaddr *)&addr, sizeof(struct sockaddr));
