@@ -49,9 +49,7 @@ int main(int argc, char * argv[])
     char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
     const int IP_LEN = 16;
-    char recorderAddress[IP_LEN] = "";  
-
-    strncpy(recorderAddress, "127.0.0.1", 9);
+    char recorderAddress[IP_LEN] = "127.0.0.1";  
 
     int programMode = STANDARD_MODE;
     int debugLevel = 1;
@@ -59,7 +57,7 @@ int main(int argc, char * argv[])
     bool bEnableWiresharkOutput = false;
 
     int option;
-    while ((option = getopt(argc, argv, "hPwr:t:i:o:d:f:a")) != -1)
+    while ((option = getopt(argc, argv, "hPwr:t:a:i:o:d:f")) != -1)
     {
         switch (option)
         {
