@@ -202,7 +202,7 @@ int main(int argc, char * argv[])
         memset(&addr, 0, sizeof(struct sockaddr_in));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(udp_port_rx);
-        inet_aton("127.0.0.1", &addr.sin_addr);
+        inet_aton("0.0.0.0", &addr.sin_addr);
 
         fd_input = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         bind(fd_input, (struct sockaddr *)&addr, sizeof(struct sockaddr));
