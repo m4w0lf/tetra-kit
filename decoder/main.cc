@@ -1,5 +1,9 @@
 #include <cstdio>
 #include "decoder.h"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <netdb.h>
 
 /** @brief Program working mode enumeration */
 
@@ -48,13 +52,20 @@ int main(int argc, char * argv[])
     char optFilenameInput[FILENAME_LEN]  = "";                                  // input bits filename
     char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
-    const int IP_LEN = 16;
-    char recorderAddress[IP_LEN] = "127.0.0.1";  
-
     int programMode = STANDARD_MODE;
     int debugLevel = 1;
     bool bRemoveFillBits = true;
     bool bEnableWiresharkOutput = false;
+
+    // create output destination socket
+    struct sockaddr_in addr_output;
+    memset(&addr_output, 0, sizeof(struct sockaddr_in));
+    addr_output.sin_family = AF_INET;
+    inet_aton("127.0.0.1", &addr_output.sin_addr);
+
+    struct addrinfo *result;
+    struct addrinfo hints;
+    int s;
 
     int option;
     while ((option = getopt(argc, argv, "hPwr:t:a:i:o:d:f")) != -1)
@@ -95,7 +106,29 @@ int main(int argc, char * argv[])
             break;
 
         case 'a':
-            strncpy(recorderAddress, optarg, IP_LEN - 1);
+            memset(&hints, 0, sizeof(struct addrinfo));
+            hints.ai_family = AF_INET;    /* Allow IPv4 only, use AF_UNSPEC for IPv4 and IPv6 support */
+//            hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+            hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+            hints.ai_flags = 0;
+            hints.ai_protocol = 0;          /* Any protocol */
+
+            s = getaddrinfo(optarg, NULL, &hints, &result);
+            if (s != 0) {
+                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+                exit(EXIT_FAILURE);
+            }
+
+            if(result == NULL) {
+                fprintf(stderr, "cannot resolve %s\n", optarg);
+
+                exit(EXIT_FAILURE);
+            }
+
+            addr_output.sin_addr = ((struct sockaddr_in *) result->ai_addr)->sin_addr;
+
+            freeaddrinfo(result);           /* No longer needed */
+
             break;
 
         case 'h':
@@ -121,16 +154,12 @@ int main(int argc, char * argv[])
         }
     }
 
-
-    // create output destination socket
-    struct sockaddr_in addr_output;
-    memset(&addr_output, 0, sizeof(struct sockaddr_in));
-    addr_output.sin_family = AF_INET;
     addr_output.sin_port = htons(udpPortTx);
-    inet_aton(recorderAddress, &addr_output.sin_addr);
+
+    printf("Destination: %s:%d\n", inet_ntoa(addr_output.sin_addr), udpPortTx);
 
     int udpSocketFd  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    connect(udpSocketFd, (struct sockaddr *) & addr_output, sizeof(struct sockaddr));
+    connect(udpSocketFd, (struct sockaddr *) &addr_output, sizeof(struct sockaddr));
     printf("Output socket 0x%04x on port %d\n", udpSocketFd, udpPortTx);
     if (udpSocketFd < 0)
     {
