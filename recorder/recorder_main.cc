@@ -247,7 +247,7 @@ int main(int argc, char * argv[])
     }
     else                                                                        // read from UDP socket fd_input
     {
-        const int TIME_WAIT_MS = 50;                                            // udp port maximum waiting time [ms]
+        const int TIME_WAIT_MS = 100;                                            // udp port maximum waiting time [ms]
 
         while (!sigint_flag)
         {
