@@ -247,41 +247,12 @@ int main(int argc, char * argv[])
     }
     else                                                                        // read from UDP socket fd_input
     {
-        const int TIME_WAIT_MS = 100;                                            // udp port maximum waiting time [ms]
+        const int TIME_WAIT_MS = 50;                                            // udp port maximum waiting time [ms]
 
         while (!sigint_flag)
         {
             memset(rx_buf, 0, sizeof(rx_buf));
             int len = timed_recv(fd_input, rx_buf, RX_BUFLEN, TIME_WAIT_MS);
-
-
-int timed_recv(int fd_sock_rx, char * msg, std::size_t max_size, int max_wait_ms)
-{
-    struct sockaddr_in saddr_in;
-    socklen_t socket_len = sizeof(saddr_in);
-
-    fd_set fdset;
-    FD_ZERO(&fdset);                                                            // clear fd set
-    FD_SET(fd_sock_rx, &fdset);                                                 // add socket fd to set
-
-    struct timeval timeout;
-    timeout.tv_sec  =  max_wait_ms / 1000;
-    timeout.tv_usec = (max_wait_ms % 1000) * 1000;
-
-    int ret = select(fd_sock_rx + 1, &fdset, &fdset, &fdset, &timeout);         // monitor socket for max_wait_ms
-    int val = -1;
-
-    if (ret > 0)                                                                // socket has data, then receive it
-    {
-        val = recvfrom(fd_sock_rx, msg, max_size, 0, (struct sockaddr *)&saddr_in, &socket_len);
-    }
-    else                                                                        // invalid or no data
-    {
-        val = -1;
-    }
-
-    return val;
-}
 
             if (len > 32)                                                        // skip small packets
             {
