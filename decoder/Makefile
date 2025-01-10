@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -fmax-errors=5 -O2 -std=c++11 -Wall -Wextra
-LDFLAGS = -lz
+LDFLAGS = -lz -lzmq
 
 SRC = main.cc decoder.cc \
 	common/base64.cc common/pdu.cc common/layer.cc common/log.cc common/report.cc common/tetracell.cc common/utils.cc common/tetra.cc \

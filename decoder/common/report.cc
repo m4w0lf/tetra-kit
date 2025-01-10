@@ -12,9 +12,9 @@ typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> Gene
  *
  */
 
-Report::Report(const int socketFd, Tetra::Log * log)
+Report::Report(zmq::socket_t *zmqSocket, Tetra::Log * log)
 {
-    m_socketFd = socketFd;
+    m_zmqSocket = zmqSocket;
     m_log      = log;
 }
 
@@ -314,7 +314,7 @@ void Report::send()
     std::string output(buffer.GetString());
 
     output += '\n';                                                             // append newline
-    write(m_socketFd, output.c_str(), output.length() * sizeof(char));          // send complete line
-
+    m_zmqSocket->send(zmq::buffer(output), zmq::send_flags::none);
+    
     m_log->print(LogLevel::MEDIUM, "%s\n", output.c_str());
 }

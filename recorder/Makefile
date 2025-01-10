@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -O2 -std=c++11 -Wall -Wextra -I. -Iaudio -Iaudio/cdecoder -Iaudio/sdecoder -fmax-errors=5
-LDFLAGS = -lncurses -lz
+LDFLAGS = -lncurses -lz -lzmq
 
 # recorder
 SRC = recorder_main.cc window.cc base64.cc json_parser.cc cid.cc call_identifier.cc utils.cc

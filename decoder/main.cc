@@ -5,12 +5,15 @@
 #include <unistd.h>
 #include <netdb.h>
 
+#include <string>
+#include <iostream>
+
+#include <zmq.hpp>
+
 /** @brief Program working mode enumeration */
 
 enum ProgramMode {
     STANDARD_MODE         = 0,
-    READ_FROM_BINARY_FILE = 1,
-    SAVE_TO_BINARY_FILE   = 2,
     RX_PACKED             = 4,
 };
 
@@ -46,29 +49,16 @@ int main(int argc, char * argv[])
     sigaction(SIGINT, &sa, 0);
 
     int udpPortRx = 42000;                                                      // UDP RX port (ie. where to receive bits from PHY layer)
-    int udpPortTx = 42100;                                                      // UDP TX port (ie. where to send Json data)
-
-    const int FILENAME_LEN = 256;
-    char optFilenameInput[FILENAME_LEN]  = "";                                  // input bits filename
-    char optFilenameOutput[FILENAME_LEN] = "";                                  // output bits filename
 
     int programMode = STANDARD_MODE;
     int debugLevel = 1;
     bool bRemoveFillBits = true;
     bool bEnableWiresharkOutput = false;
 
-    // create output destination socket
-    struct sockaddr_in addr_output;
-    memset(&addr_output, 0, sizeof(struct sockaddr_in));
-    addr_output.sin_family = AF_INET;
-    inet_aton("127.0.0.1", &addr_output.sin_addr);
-
-    struct addrinfo *result;
-    struct addrinfo hints;
-    int s;
+    char queueUrl[255] = "tcp://localhost:42100";     // initialize the zmq context with a single IO thread
 
     int option;
-    while ((option = getopt(argc, argv, "hPwr:t:a:i:o:d:f")) != -1)
+    while ((option = getopt(argc, argv, "hPwr:a:d:f")) != -1)
     {
         switch (option)
         {
@@ -76,21 +66,8 @@ int main(int argc, char * argv[])
             udpPortRx = atoi(optarg);
             break;
 
-        case 't':
-            udpPortTx = atoi(optarg);
-            break;
-
         case 'P':
             programMode |= RX_PACKED;
-            break;
-        case 'i':
-            strncpy(optFilenameInput, optarg, FILENAME_LEN - 1);
-            programMode |= READ_FROM_BINARY_FILE;
-            break;
-
-        case 'o':
-            strncpy(optFilenameOutput, optarg, FILENAME_LEN - 1);
-            programMode |= SAVE_TO_BINARY_FILE;
             break;
 
         case 'd':
@@ -106,28 +83,7 @@ int main(int argc, char * argv[])
             break;
 
         case 'a':
-            memset(&hints, 0, sizeof(struct addrinfo));
-            hints.ai_family = AF_INET;    /* Allow IPv4 only, use AF_UNSPEC for IPv4 and IPv6 support */
-//            hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-            hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-            hints.ai_flags = 0;
-            hints.ai_protocol = 0;          /* Any protocol */
-
-            s = getaddrinfo(optarg, NULL, &hints, &result);
-            if (s != 0) {
-                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-                exit(EXIT_FAILURE);
-            }
-
-            if(result == NULL) {
-                fprintf(stderr, "cannot resolve %s\n", optarg);
-
-                exit(EXIT_FAILURE);
-            }
-
-            addr_output.sin_addr = ((struct sockaddr_in *) result->ai_addr)->sin_addr;
-
-            freeaddrinfo(result);           /* No longer needed */
+            strncpy(queueUrl, optarg, 255);
 
             break;
 
@@ -135,10 +91,7 @@ int main(int argc, char * argv[])
             printf("\nUsage: ./decoder [OPTIONS]\n\n"
                    "Options:\n"
                    "  -r <UDP socket> receiving from phy [default port is 42000]\n"
-                   "  -t <UDP socket> sending Json data [default port is 42100]\n"
-                   "  -a <ip address> sending Json data [default is 127.0.0.1]\n"
-                   "  -i <file> replay data from binary file instead of UDP\n"
-                   "  -o <file> record data to binary file (can be replayed with -i option)\n"
+                   "  -a ZMQ url for output Json data [default is tcp://localhost:42100]\n"
                    "  -d <level> print debug information\n"
                    "  -f keep fill bits\n"
                    "  -w enable wireshark output [EXPERIMENTAL]\n"
@@ -154,18 +107,14 @@ int main(int argc, char * argv[])
         }
     }
 
-    addr_output.sin_port = htons(udpPortTx);
+    
+    printf("Destination: %s\n", queueUrl);
 
-    printf("Destination: %s:%d\n", inet_ntoa(addr_output.sin_addr), udpPortTx);
+    zmq::context_t zmqContext{1};
 
-    int udpSocketFd  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    connect(udpSocketFd, (struct sockaddr *) &addr_output, sizeof(struct sockaddr));
-    printf("Output socket 0x%04x on port %d\n", udpSocketFd, udpPortTx);
-    if (udpSocketFd < 0)
-    {
-        perror("Couldn't create output socket");
-        exit(EXIT_FAILURE);
-    }
+    // construct a REQ (request) socket and connect to interface
+    zmq::socket_t zmqSocket{zmqContext, zmq::socket_type::push};
+    zmqSocket.connect(queueUrl);
 
     // create decoder
     Tetra::LogLevel logLevel;
@@ -191,59 +140,29 @@ int main(int argc, char * argv[])
 
     }
 
-    // output file if any
-    int fdOutputSaveFile = 0;
-
-    if (programMode & SAVE_TO_BINARY_FILE)
-    {
-        // save input bits to file
-        fdOutputSaveFile = open(optFilenameOutput, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
-        if (fdOutputSaveFile < 0)
-        {
-            fprintf(stderr, "Couldn't open output file");
-            exit(EXIT_FAILURE);
-        }
-    }
-
     // input source
     int fdInput = 0;
 
-    if (programMode & READ_FROM_BINARY_FILE)
+    // read input bits from UDP socket
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(struct sockaddr_in));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(udpPortRx);
+    inet_aton("0.0.0.0", &addr.sin_addr);
+
+    fdInput = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    bind(fdInput, (struct sockaddr *)&addr, sizeof(struct sockaddr));
+
+    printf("Input socket 0x%04x on port %d\n", fdInput, udpPortRx);
+
+    if (fdInput < 0)
     {
-        // read input bits from file
-        fdInput = open(optFilenameInput, O_RDONLY);
-
-        printf("Input from file '%s' 0x%04x\n", optFilenameInput, fdInput);
-
-        if (fdInput < 0)
-        {
-            fprintf(stderr, "Couldn't open input bits file");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else
-    {
-        // read input bits from UDP socket
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(struct sockaddr_in));
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(udpPortRx);
-        inet_aton("0.0.0.0", &addr.sin_addr);
-
-        fdInput = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        bind(fdInput, (struct sockaddr *)&addr, sizeof(struct sockaddr));
-
-        printf("Input socket 0x%04x on port %d\n", fdInput, udpPortRx);
-
-        if (fdInput < 0)
-        {
-            fprintf(stderr, "Couldn't create input socket");
-            exit(EXIT_FAILURE);
-        }
+        fprintf(stderr, "Couldn't create input socket");
+        exit(EXIT_FAILURE);
     }
 
     // create decoder
-    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(udpSocketFd, bRemoveFillBits, logLevel, bEnableWiresharkOutput);
+    Tetra::TetraDecoder * decoder = new Tetra::TetraDecoder(&zmqSocket, bRemoveFillBits, logLevel, bEnableWiresharkOutput);
 
     // receive buffer
     const int RXBUF_LEN = 1024;
@@ -269,11 +188,6 @@ int main(int argc, char * argv[])
             break;
         }
 
-        if (programMode & SAVE_TO_BINARY_FILE)
-        {
-            write(fdOutputSaveFile, rxBuf, bytesRead);
-        }
-
         // bytes must be pushed one at a time into decoder
         for (int cnt = 0; cnt < bytesRead; cnt++)
         {
@@ -291,16 +205,11 @@ int main(int argc, char * argv[])
         }
     }
 
-    close(udpSocketFd);
-
     // file or socket must be closed
     close(fdInput);
-
-    // close save file only if openede
-    if (programMode & SAVE_TO_BINARY_FILE)
-    {
-        close(fdOutputSaveFile);
-    }
+    
+    zmqSocket.close();
+    zmqContext.close();
 
     delete decoder;
 

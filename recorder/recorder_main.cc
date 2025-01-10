@@ -27,6 +27,11 @@
 #include "cid.h"
 #include "window.h"
 
+#include <string>
+#include <iostream>
+
+#include <zmq.hpp>
+
 /*
  * Simple Tetra recorder with ncurses ui
  *
@@ -53,39 +58,6 @@
  * Filtering log for SDS: sed -n '/SDS/ p' log.txt > out.txt
  *
  */
-
-/**
- * @brief Receive from UDP socket with time-out
- *
- */
-
-int timed_recv(int fd_sock_rx, char * msg, std::size_t max_size, int max_wait_ms)
-{
-    struct sockaddr_in saddr_in;
-    socklen_t socket_len = sizeof(saddr_in);
-
-    fd_set fdset;
-    FD_ZERO(&fdset);                                                            // clear fd set
-    FD_SET(fd_sock_rx, &fdset);                                                 // add socket fd to set
-
-    struct timeval timeout;
-    timeout.tv_sec  =  max_wait_ms / 1000;
-    timeout.tv_usec = (max_wait_ms % 1000) * 1000;
-
-    int ret = select(fd_sock_rx + 1, &fdset, &fdset, &fdset, &timeout);         // monitor socket for max_wait_ms
-    int val = -1;
-
-    if (ret > 0)                                                                // socket has data, then receive it
-    {
-        val = recvfrom(fd_sock_rx, msg, max_size, 0, (struct sockaddr *)&saddr_in, &socket_len);
-    }
-    else                                                                        // invalid or no data
-    {
-        val = -1;
-    }
-
-    return val;
-}
 
 /** @brief Program working mode enumeration */
 
@@ -119,7 +91,7 @@ int main(int argc, char * argv[])
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, 0);
 
-    int udp_port_rx = 42100;                                                    // UDP RX port (ie. where to receive Json text from decoder)
+    int zmqPort = 42100;                                                    // UDP RX port (ie. where to receive Json text from decoder)
 
     const int FILENAME_LEN = 256;
     char opt_filename_in[FILENAME_LEN]  = "";                                   // input Json text filename
@@ -140,7 +112,7 @@ int main(int argc, char * argv[])
             break;
 
         case 'r':
-            udp_port_rx = atoi(optarg);
+            zmqPort = atoi(optarg);
             break;
 
         case 'i':
@@ -164,8 +136,8 @@ int main(int argc, char * argv[])
             printf("\nUsage: ./recorder [OPTIONS]\n\n"
                    "Options:\n"
                    "  -x don't process raw speech output with internal codec\n"
-                   "  -r <UDP socket> receiving Json data from decoder [default port is 42100]\n"
-                   "  -i <file> replay data from Json text file instead of UDP\n"
+                   "  -r <ZMQ socket> receiving Json data from decoder [default port is 42100]\n"
+                   "  -i <file> replay data from Json text file instead of ZMQ\n"
                    "  -o <file> to record Json data in different text file [default file name is 'log.txt'] (can be replayed with -i option)\n"
                    "  -l <ncurses line length> maximum characters printed on a report line\n"
                    "  -n <maximum lines in ssi window> ssi window will wrap when max. lines are printed\n"
@@ -183,38 +155,8 @@ int main(int argc, char * argv[])
     mkdir("out", S_IRWXU | S_IRGRP | S_IXGRP);                                  // create out/ directory
     mkdir("raw", S_IRWXU | S_IRGRP | S_IXGRP);                                  // create raw/ directory
 
-    FILE * file_in = NULL;                                                      // for Json text read
-    int fd_input = 0;                                                           // for UDP read
-
-    if (program_mode & READ_FROM_JSON_TEXT_FILE)                                // read input text from file
-    {
-        file_in = fopen(opt_filename_in, "rt");
-
-        if (file_in == NULL)
-        {
-            fprintf(stderr, "Couldn't open input Json text file");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else                                                                        // read input bits from UDP socket
-    {
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(struct sockaddr_in));
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(udp_port_rx);
-        inet_aton("0.0.0.0", &addr.sin_addr);
-
-        fd_input = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        bind(fd_input, (struct sockaddr *)&addr, sizeof(struct sockaddr));
-
-        if (fd_input < 0)
-        {
-            fprintf(stderr, "Input socket 0x%04x on port %d\n", fd_input, udp_port_rx);
-            fprintf(stderr, "Couldn't create input socket");
-            exit(EXIT_FAILURE);
-        }
-    }
-
+                                                       // for UDP read
+ 
     // output log file
     FILE * file_out = fopen(opt_filename_out, "at");                            // default name is 'log.txt' unless modified by user with options
 
@@ -228,11 +170,23 @@ int main(int argc, char * argv[])
     scr_init(line_length, max_bottom_lines);
     cid_init(raw_format_flag);
 
-    const int RX_BUFLEN = 65535;
-    char rx_buf[RX_BUFLEN];
 
-    if (program_mode & READ_FROM_JSON_TEXT_FILE)                                // read from Json text file file_in
+    if (program_mode & READ_FROM_JSON_TEXT_FILE)                                // read input text from file
     {
+        const int RX_BUFLEN = 65535;
+        char rx_buf[RX_BUFLEN];
+
+        FILE * file_in = NULL;                                                      // for Json text read
+        int fd_input = 0;    
+
+        file_in = fopen(opt_filename_in, "rt");
+
+        if (file_in == NULL)
+        {
+            fprintf(stderr, "Couldn't open input Json text file");
+            exit(EXIT_FAILURE);
+        }
+
         while (!sigint_flag)
         {
             memset(rx_buf, 0, sizeof(rx_buf));
@@ -245,23 +199,30 @@ int main(int argc, char * argv[])
 
         fclose(file_in);
     }
-    else                                                                        // read from UDP socket fd_input
+    else                                                                        // read input bits from UDP socket
     {
-        const int TIME_WAIT_MS = 50;                                            // udp port maximum waiting time [ms]
+        zmq::context_t zmqContext{1};
+
+        // construct a REP (reply) socket and bind to interface
+        zmq::socket_t zmqSocket{zmqContext, zmq::socket_type::pull};
+
+        char bindUrl[15];
+
+        sprintf(bindUrl, "tcp://*:%d", zmqPort);
+
+        zmqSocket.bind(bindUrl);
+
+        zmq::message_t data;
 
         while (!sigint_flag)
         {
-            memset(rx_buf, 0, sizeof(rx_buf));
-            int len = timed_recv(fd_input, rx_buf, RX_BUFLEN, TIME_WAIT_MS);
+            // receive a data from client
+            zmqSocket.recv(data, zmq::recv_flags::none);
 
-            if (len > 32)                                                        // skip small packets
-            {
-                std::string data(rx_buf);
-                cid_parse_pdu(data, file_out);
-            }
+            cid_parse_pdu(data.to_string(), file_out);
         }
-
-        close(fd_input);
+        zmqSocket.close();
+        zmqContext.close();
     }
 
     fclose(file_out);

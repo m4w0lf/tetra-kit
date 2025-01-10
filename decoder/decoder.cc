@@ -7,13 +7,13 @@ using namespace Tetra;
  *
  */
 
-TetraDecoder::TetraDecoder(int socketFd, bool bRemoveFillBits, const LogLevel logLevel, bool bEnableWiresharkOutput)
+TetraDecoder::TetraDecoder(zmq::socket_t *zmqSocket, bool bRemoveFillBits, const LogLevel logLevel, bool bEnableWiresharkOutput)
 {
-    m_socketFd = socketFd;
+    m_zmqSocket = zmqSocket;
 
     m_log       = new Log(logLevel);
 
-    m_report    = new Report(m_socketFd, m_log);
+    m_report    = new Report(m_zmqSocket, m_log);
     m_tetraCell = new TetraCell();
 
     m_sds    = new Sds(m_log, m_report);

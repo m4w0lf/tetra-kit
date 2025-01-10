@@ -13,6 +13,9 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <iostream>
+#include <zmq.hpp>
+
 #include "tetra.h"
 #include "log.h"
 #include "base64.h"
@@ -27,7 +30,7 @@ namespace Tetra {
 
     class Report {
     public:
-        Report(const int socketFd, Tetra::Log * log);
+        Report(zmq::socket_t *zmqSocket, Tetra::Log * log);
         ~Report();
 
         void start(const std::string service, const std::string pdu, const TetraTime tetraTime, const MacAddress macAddress);
@@ -44,7 +47,7 @@ namespace Tetra {
         void send();
 
     private:
-        int m_socketFd;                                                         ///< UDP socket to write to
+        zmq::socket_t *m_zmqSocket;                                                         ///< UDP socket to write to
         Tetra::Log * m_log;                                                     ///< Screen logger
 
         ///< rapidjson document
